@@ -8,7 +8,7 @@ extern Goi_du_lieu Du_lieu_gui_toi_ESP;
 
 HardwareSerial SerialSTM(1);
 
-void initUART_STM32() {
+void setupUART_STM32() {
   // Cấu hình Serial cho ESP32-S3 kết nối với STM32
   SerialSTM.begin(115200, SERIAL_8N1, STM32_RX, STM32_TX);
   SerialSTM.setTimeout(10); 

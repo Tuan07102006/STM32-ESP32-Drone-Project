@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <TinyGPS++.h>
 
-void initGPS();
+void setupGPS();
 void readGPSRaw();
 
 #endif

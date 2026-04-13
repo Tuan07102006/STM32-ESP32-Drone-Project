@@ -48,16 +48,16 @@ double gps_alt;     // Độ cao GPS (mét)
 double gps_course;  // Hướng di chuyển (Độ, giống la bàn)
 };
 
-struct __attribute__((packed)) Device_Status {
-  bool stm32_connected;
-  bool gps_fixed;
-  bool wifi_connected;
-};
+//struct __attribute__((packed)) Device_Status {
+ // bool stm32_connected;
+ // bool gps_fixed;
+  //bool wifi_connected;
+//};
 
 // --- BIẾN TOÀN CỤC ---
 extern Goi_du_lieu Du_lieu_gui_toi_ESP;
 extern Lenh_Dieu_Khien Lenh_gui_di;
 extern GPS_Data GPS_data;
-extern Device_Status Device_status;
+//extern Device_Status Device_status;
 
 #endif

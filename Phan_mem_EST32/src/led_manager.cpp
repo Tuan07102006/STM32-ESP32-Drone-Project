@@ -8,7 +8,7 @@ Adafruit_NeoPixel led_thong_bao(SO_BONG_LED, CHAN_NOI_LED, NEO_GRB + NEO_KHZ800)
 unsigned long thoi_gian_nhay_led_truoc = 0;  
 bool trang_thai_led = false;
 
-void initLED() {
+void setupled() {
   led_thong_bao.begin();
   led_thong_bao.setBrightness(50);
   led_thong_bao.setPixelColor(0, led_thong_bao.Color(255, 255, 255)); // Trắng khi khởi động

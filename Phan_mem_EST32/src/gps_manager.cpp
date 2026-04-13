@@ -6,7 +6,7 @@
 TinyGPSPlus gps;
 HardwareSerial gpsSerial(2); 
 
-void initGPS() {
+void setupGPS() {
   gpsSerial.begin(GPS_BAUD, SERIAL_8N1, CHAN_NOI_GPS_RX, CHAN_NOI_GPS_TX);
 }
 

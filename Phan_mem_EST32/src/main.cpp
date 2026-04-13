@@ -6,28 +6,36 @@
 #include "wifi_manager.h"
 #include "gps_manager.h"
 #include "uart_stm32.h" 
+#include "udp_manager.h"
 
 // TẠO THỰC THỂ CHO CÁC BIẾN TOÀN CỤC
 Goi_du_lieu Du_lieu_gui_toi_ESP;
 Lenh_Dieu_Khien Lenh_gui_di = {125.0, 0.0, 0.0, 0.0,   1.5, 0.05, 1.2,   1.5, 0.05, 1.2,   2.0, 0.1,   0};
 
 GPS_Data GPS_data;           
-Device_Status Device_status; 
+//Device_Status Device_status; 
 
 void setup() {
   Serial.begin(115200);
 
-  initLED();             
-  SetupWiFi();          
-  initGPS();             
-  initUART_STM32();      
+  setupled();             
+  setupwifi();          
+  setupGPS();            
+  setupUART_STM32();    
+  setupUDP();   
 
 }
 
 void loop() {
   updateLEDStatus(); 
-  handleWiFi();      
+  handlewifi();      
+  
+  receiveCommandsUDP(); 
+  checkFailsafe();    
+  
   readGPSRaw();                           
   readDataFromSTM32();                    
-  sendDataToSTM32();                      
+  
+  sendTelemetryUDP();   
+  sendDataToSTM32();   
 }

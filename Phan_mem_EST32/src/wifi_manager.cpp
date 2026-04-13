@@ -8,13 +8,13 @@ const char* password = "thuy@1977";
 unsigned long lastReconnectMillis = 0;
 const unsigned long reconnectInterval = 4000;
 
-void SetupWiFi() {
+void setupwifi() {
   Serial.begin(115200);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   Serial.println(WiFi.localIP()); 
 }
-void handleWiFi() {
+void handlewifi() {
   if (WiFi.status() != WL_CONNECTED) {
         unsigned long currentMillis = millis();
         
