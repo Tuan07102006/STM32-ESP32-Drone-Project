@@ -1,7 +1,6 @@
 #ifndef WEB_PAGE_H
 #define WEB_PAGE_H
 
-#include <Arduino.h>
 
 // Sử dụng R"rawliteral(...)rawliteral" để chứa toàn bộ HTML/CSS/JS
 const char index_html[] PROGMEM = R"rawliteral(
