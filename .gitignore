@@ -1,0 +1,19 @@
+# Bỏ qua các file biên dịch của PlatformIO trong tất cả thư mục con
+**/.pio/
+**/.pioenvs/
+**/.piolibdeps/
+**/.clang_complete
+**/.gcc-flags.json
+
+# Bỏ qua các file cấu hình riêng của VS Code
+**/.vscode/
+!**/.vscode/extensions.json
+
+# Bỏ qua các file thực thi nặng
+*.bin
+*.elf
+*.hex
+
+# Bỏ qua các file tạm của hệ điều hành
+.DS_Store
+Thumbs.db
