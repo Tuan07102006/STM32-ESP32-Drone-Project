@@ -127,4 +127,4 @@ const char index_html[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
-#endif // ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT ĐỂ SỬA LÕooooo
+#endif // ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT ĐỂ SỬA LỖI
