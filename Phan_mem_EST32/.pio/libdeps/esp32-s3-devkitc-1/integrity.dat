@@ -1,0 +1,5 @@
+mcauser/i2cdetect @ ^1.0.0
+adafruit/Adafruit NeoPixel @ ^1.11.0
+mikalhart/TinyGPSPlus @ ^1.0.3
+bblanchon/ArduinoJson @ ^6.21.3
+mathieucarbou/ESPAsyncWebServer @ ^3.3.22
