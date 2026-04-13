@@ -2,6 +2,6 @@
 #define LED_MANAGER_H
 
 void initLED();
-void updateLEDStatus(int connected_status); 
+void updateLEDStatus(); 
 
 #endif
