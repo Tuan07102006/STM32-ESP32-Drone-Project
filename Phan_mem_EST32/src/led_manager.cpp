@@ -1,6 +1,7 @@
 #include "led_manager.h"
 #include "config.h" // Chứa CHAN_NOI_LED, SO_BONG_LED
 #include <Adafruit_NeoPixel.h>
+#include <WiFi.h>
 
 // Đối tượng LED được khai báo KÍN bên trong file cpp này
 Adafruit_NeoPixel led_thong_bao(SO_BONG_LED, CHAN_NOI_LED, NEO_GRB + NEO_KHZ800);  
@@ -15,8 +16,8 @@ void initLED() {
   led_thong_bao.show();
 }
 
-void updateLEDStatus(int so_thiet_bi_ket_noi) {
-  if (so_thiet_bi_ket_noi == 0) {
+void updateLEDStatus(int connected_status) {
+  if (connected_status != WL_CONNECTED) {
     if (millis() - thoi_gian_nhay_led_truoc >= 400) {
       thoi_gian_nhay_led_truoc = millis();
       trang_thai_led = !trang_thai_led;

@@ -6,14 +6,7 @@
 TinyGPSPlus gps;
 HardwareSerial gpsSerial(2); 
 
-// Khởi tạo biến
-double gps_lat = 0.0;
-double gps_lng = 0.0;
-int    gps_sat = 0;
-double gps_hdop = 99.9; // Mặc định 99.9 là sai số cực lớn (Chưa có sóng)
-double gps_speed = 0.0;
-double gps_alt = 0.0;
-double gps_course = 0.0;
+extern GPS_Data GPS_data;
 
 void initGPS() {
   gpsSerial.begin(GPS_BAUD, SERIAL_8N1, CHAN_NOI_GPS_RX, CHAN_NOI_GPS_TX);

@@ -4,7 +4,7 @@
 // --- NHÚNG CÁC MODULE ĐÃ TÁCH ---
 #include "config.h"
 #include "led_manager.h"
-#include "wifi_server.h"
+#include "wifi_manager.h"
 #include "gps_manager.h"
 #include "uart_stm32.h" 
 
@@ -17,12 +17,9 @@ void setup() {
   Serial.begin(115200);
   Serial.println("\n=== KHỞI ĐỘNG TRẠM MẶT ĐẤT ESP32-S3 (GCS) ===");
 
-  // 2. Khởi tạo đường truyền I2C (Thay đổi chân SDA, SCL nếu cần)
-  Wire.begin(8, 9); 
-
   // 3. Đánh thức từng module phần cứng và phần mềm
   initLED();             // Bật đèn LED
-  setupWiFiAndWeb();     // Phát WiFi và bật WebServer
+  setupWiFi();          // Kết nối WiFi
   initGPS();             // Mở cổng UART2 đọc NEO-8M
   initUART_STM32();      // Mở cổng UART1 nói chuyện với STM32
 
@@ -30,10 +27,9 @@ void setup() {
 }
 
 void loop() {
-  updateLEDStatus(getConnectedDevices()); // Cập nhật nháy LED
+  updateLEDStatus(); // Cập nhật nháy LED
+  handleWiFi();      // Quản lý kết nối WiFi
   readGPSRaw();                           // Đọc tọa độ GPS
   readDataFromSTM32();                    // Nhận Telemetry từ STM32
   sendDataToSTM32();                      // Gửi lệnh điều khiển xuống STM32
-  sendTelemetryToWeb();                   // Bơm dữ liệu lên Web (GCS)
-  cleanupWebSocket();                     // Dọn dẹp RAM cho WebSocket
 }
