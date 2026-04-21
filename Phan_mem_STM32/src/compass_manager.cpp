@@ -135,7 +135,7 @@ void readCompass() {
       // Vừa trừ Offset (Hard), vừa nhân Scale (Soft)
       float x_cal = ((float)raw_x - X_offset) * Scale_X;
       float y_cal = ((float)raw_y - Y_offset) * Scale_Y;
-      float z_cal = ((float)raw_z - Z_offset) * Scale_Z;
+      float z_cal = -((float)raw_z - Z_offset) * Scale_Z;
 
       //  BƯỚC 2: BÙ NGHIÊNG 3D (TILT COMPENSATION) 
       float roll_rad = goc_roll_thuc_te * PI / 180.0f;

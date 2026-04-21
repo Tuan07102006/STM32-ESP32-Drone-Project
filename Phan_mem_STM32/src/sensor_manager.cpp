@@ -12,7 +12,6 @@ Adafruit_BMP280 bmp(BMP_CBS);
 
 void initSensors() {
     pinMode(BMP_CBS, OUTPUT); digitalWrite(BMP_CBS, HIGH);
-    Wire.setSCL(I2C_SCL); Wire.setSDA(I2C_SDA); Wire.begin();
     
     ina219.begin(); 
     bmp.begin();

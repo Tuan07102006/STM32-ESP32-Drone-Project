@@ -40,5 +40,6 @@ void loop() {
   readDataFromSTM32();                    
   
   sendTelemetryUDP();   
-  sendDataToSTM32();   
+  sendDataToSTM32();  
+
 }

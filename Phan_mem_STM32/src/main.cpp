@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Wire.h>
 #include "config.h"
 #include "motor_manager.h"
 #include "imu_manager.h"
@@ -21,6 +22,7 @@ float goc_roll_thuc_te=0, goc_pitch_thuc_te=0, goc_yaw_thuc_te=0;
 unsigned long time_prev = 0;
 
 void setup() {
+  Wire.setSCL(I2C_SCL); Wire.setSDA(I2C_SDA); Wire.begin();
   initMotors();
   initCompass();
   //calibrateESC();

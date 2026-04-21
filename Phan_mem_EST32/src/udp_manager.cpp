@@ -24,7 +24,6 @@ const unsigned long THOI_GIAN_MAT_SONG_TOI_DA = 2000;
 
 void setupUDP() {
   udp.begin(localPort); // QUAN TRỌNG: Mở cổng để bắt đầu nhận dữ liệu UDP
-  Serial.println("UDP Ready to send and receive!");
 }
 
 void receiveCommandsUDP() {
@@ -152,7 +151,6 @@ void sendTelemetryUDP() {
       telemetryData += "*";
 
       udp.beginPacket(targetIP, targetPort);
-      udp.print(telemetryData);
       udp.endPacket();
     }
   }

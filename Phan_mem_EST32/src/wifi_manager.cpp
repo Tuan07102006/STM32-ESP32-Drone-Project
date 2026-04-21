@@ -37,7 +37,6 @@ void handlewifi() {
     unsigned long currentMillis = millis();
     if (currentMillis - lastReconnectMillis >= reconnectInterval) {
         lastReconnectMillis = currentMillis;
-        Serial.println("Mat ket noi WiFi! Dang thu ket noi lai...");
         WiFi.disconnect(); 
         WiFi.begin(ssid, password);
     }
