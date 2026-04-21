@@ -98,7 +98,7 @@ void processFlightControl(float dt) {
     float thr = Lenh_tu_ESP.Muc_Ga;
     
     //  CHỐT CHẶN CHỐNG TỰ RÚ GA NẰM Ở ĐÂY 
-    if (thr < 1450) {
+    if (thr < 1500) {
        // KHI DRONE ĐANG NẰM TRÊN MẶT ĐẤT:
        // a. Xóa sạch khâu I để không bị tích phân sai số
        PID_roll.Tich_phan = 0;

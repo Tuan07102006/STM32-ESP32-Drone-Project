@@ -7,6 +7,8 @@
 #include "gps_manager.h"
 #include "uart_stm32.h" 
 #include "udp_manager.h"
+#include "memory_management.h"
+
 
 // TẠO THỰC THỂ CHO CÁC BIẾN TOÀN CỤC
 Goi_du_lieu Du_lieu_gui_toi_ESP;
@@ -17,7 +19,7 @@ GPS_Data GPS_data;
 
 void setup() {
   Serial.begin(115200);
-
+  setupMemory();
   setupled();             
   setupwifi();          
   setupGPS();            
@@ -28,7 +30,8 @@ void setup() {
 
 void loop() {
   updateLEDStatus(); 
-  handlewifi();      
+  readMemory();   
+  handlewifi();   
   
   receiveCommandsUDP(); 
   checkFailsafe();    

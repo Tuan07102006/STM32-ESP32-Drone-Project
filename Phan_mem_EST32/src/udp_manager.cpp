@@ -2,6 +2,8 @@
 #include "config.h"
 #include <WiFiUdp.h>
 #include <WiFi.h>
+#include "memory_management.h"
+#include <Preferences.h>
 
 WiFiUDP udp;
 
@@ -9,30 +11,84 @@ WiFiUDP udp;
 extern Lenh_Dieu_Khien Lenh_gui_di;
 extern GPS_Data GPS_data; 
 extern Goi_du_lieu Du_lieu_gui_toi_ESP;
+extern Preferences memory_management;
 
 // ĐỊA CHỈ MÁY TÍNH CỦA BẠN (Sửa lại đúng IP nhà bạn nhé)
 const char* targetIP = "192.168.10.55"; 
 const int targetPort = 12345;
+const int localPort = 12345; // THÊM: Cổng để ESP32 lắng nghe lệnh từ App
 
 // BIẾN CHO FAILSAFE
 unsigned long thoi_gian_nhan_lenh_cuoi = 0; 
 const unsigned long THOI_GIAN_MAT_SONG_TOI_DA = 2000; 
 
 void setupUDP() {
-  Serial.println("UDP Ready to send!");
+  udp.begin(localPort); // QUAN TRỌNG: Mở cổng để bắt đầu nhận dữ liệu UDP
+  Serial.println("UDP Ready to send and receive!");
 }
 
 void receiveCommandsUDP() {
   int packetSize = udp.parsePacket(); 
   if (packetSize) {
-    String incomingData = udp.readString();
+    char packetBuffer[255];
+    int len = udp.read(packetBuffer, 255);
+    if (len > 0) packetBuffer[len] = 0; // Kết thúc chuỗi
     
-    // Đặt lại thời gian nhận lệnh
+    String incomingData = String(packetBuffer);
     thoi_gian_nhan_lenh_cuoi = millis(); 
 
+    // LỆNH 1: ĐIỀU KHIỂN BAY TỪ JOYSTICK (Gửi liên tục, KHÔNG LƯU FLASH)
+    // Định dạng: #Ga,Roll,Pitch,Yaw,Arm*
     if (incomingData.startsWith("#") && incomingData.endsWith("*")) {
-      Serial.print("Da nhan lenh tu App: ");
-      Serial.println(incomingData);
+      float tempGa, tempRoll, tempPitch, tempYaw;
+      int tempArm;
+      // Quét 5 biến
+      int parsed = sscanf(incomingData.c_str(), "#%f,%f,%f,%f,%d*", &tempGa, &tempRoll, &tempPitch, &tempYaw, &tempArm);
+      
+      if (parsed == 5) {
+        Lenh_gui_di.Muc_Ga = tempGa;
+        Lenh_gui_di.Diem_dat_Roll = tempRoll;
+        Lenh_gui_di.Diem_dat_Pitch = tempPitch;
+        Lenh_gui_di.Diem_dat_Yaw = tempYaw;
+        Lenh_gui_di.Trang_thai_Arm = (uint8_t)tempArm;
+      }
+    }
+
+    // ==============================================================
+    // LỆNH 2: CẬP NHẬT PID TỪ APP (Chỉ gửi 1 lần khi bấm nút Lưu trên App)
+    // Định dạng: @Kp_r,Ki_r,Kd_r,Kp_p,Ki_p,Kd_p,Kp_y,Ki_y,Kd_y*
+    // ==============================================================
+    else if (incomingData.startsWith("@") && incomingData.endsWith("*")) {
+      float r_p, r_i, r_d, p_p, p_i, p_d, y_p, y_i, y_d;
+      
+      // Quét 9 biến PID
+      int parsed = sscanf(incomingData.c_str(), "@%f,%f,%f,%f,%f,%f,%f,%f,%f*", 
+                          &r_p, &r_i, &r_d, &p_p, &p_i, &p_d, &y_p, &y_i, &y_d);
+      
+      if (parsed == 9) {
+        Lenh_gui_di.Kp_roll_moi = r_p;
+        Lenh_gui_di.Ki_roll_moi = r_i;
+        Lenh_gui_di.Kd_roll_moi = r_d;
+        
+        Lenh_gui_di.Kp_pitch_moi = p_p;
+        Lenh_gui_di.Ki_pitch_moi = p_i;
+        Lenh_gui_di.Kd_pitch_moi = p_d;
+
+        Lenh_gui_di.Kp_yaw_moi = y_p;
+        Lenh_gui_di.Ki_yaw_moi = y_i;
+        
+        memory_management.putFloat("Kp_roll", r_p);
+        memory_management.putFloat("Ki_roll", r_i);
+        memory_management.putFloat("Kd_roll", r_d);
+
+        memory_management.putFloat("Kp_pitch", p_p);
+        memory_management.putFloat("Ki_pitch", p_i);
+        memory_management.putFloat("Kd_pitch", p_d);
+
+        memory_management.putFloat("Kp_yaw", y_p);
+        memory_management.putFloat("Ki_yaw", y_i);
+        
+      }
     }
   }
 }
@@ -62,14 +118,14 @@ void sendTelemetryUDP() {
       telemetryData.reserve(400); 
 
       telemetryData += "$";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Roll, 2) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Pitch, 2) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Yaw, 2) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Dien_ap, 1) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Dong_dien, 1) + ",";
+      telemetryData += String(Du_lieu_gui_toi_ESP.Roll) + ",";
+      telemetryData += String(Du_lieu_gui_toi_ESP.Pitch) + ",";
+      telemetryData += String(Du_lieu_gui_toi_ESP.Yaw) + ",";
+      telemetryData += String(Du_lieu_gui_toi_ESP.Dien_ap) + ",";
+      telemetryData += String(Du_lieu_gui_toi_ESP.Dong_dien) + ",";
       telemetryData += String(Du_lieu_gui_toi_ESP.Do_cao, 1) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Ap_xuat, 1) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Nhiet_do, 1) + ",";
+      telemetryData += String(Du_lieu_gui_toi_ESP.Ap_xuat) + ",";
+      telemetryData += String(Du_lieu_gui_toi_ESP.Nhiet_do) + ",";
       
       telemetryData += String(GPS_data.gps_lat, 6) + ",";
       telemetryData += String(GPS_data.gps_lng, 6) + ",";
@@ -84,6 +140,7 @@ void sendTelemetryUDP() {
       telemetryData += String(Lenh_gui_di.Diem_dat_Pitch) + ",";
       telemetryData += String(Lenh_gui_di.Diem_dat_Yaw) + ",";
       telemetryData += String(Lenh_gui_di.Kp_roll_moi) + ",";
+
       telemetryData += String(Lenh_gui_di.Ki_roll_moi) + ",";
       telemetryData += String(Lenh_gui_di.Kd_roll_moi) + ",";
       telemetryData += String(Lenh_gui_di.Kp_pitch_moi) + ",";

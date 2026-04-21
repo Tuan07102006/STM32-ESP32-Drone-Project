@@ -8,8 +8,8 @@
 #define SO_BONG_LED 1
 #define STM32_RX 18  
 #define STM32_TX 17
-#define CHAN_NOI_GPS_RX 15
-#define CHAN_NOI_GPS_TX 16
+#define CHAN_NOI_GPS_RX 16
+#define CHAN_NOI_GPS_TX 15
 #define GPS_BAUD 9600
 
 // --- CẤU TRÚC DỮ LIỆU ---
