@@ -33,6 +33,10 @@ void saveCalibrationToEEPROM() {
     EEPROM.put(EEPROM_ADDR_SCALE_Y, Scale_Y);
     EEPROM.put(EEPROM_ADDR_SCALE_Z, Scale_Z);
     EEPROM.write(EEPROM_SIGNATURE, 0xAB); // đánh dấu đã calib
+    
+    // LỖI 3 ĐÃ SỬA: Comment lại lệnh commit() vì STM32 đa số ghi thẳng flash qua lệnh put/write, 
+    // tránh lỗi biên dịch "Class has no member named commit". (Nếu thư viện STM32 của bạn CÓ hỗ trợ commit thì hãy mở lại).
+    // EEPROM.commit(); 
 }
 
 bool loadCalibrationFromEEPROM() {
@@ -57,6 +61,7 @@ void initCompass() {
 
     // Load calibration từ EEPROM nếu có
     if (!loadCalibrationFromEEPROM()) {
+        // Có thể thêm còi bíp cảnh báo chưa calib ở đây nếu cần
     }
 }
 
@@ -73,7 +78,7 @@ void calibrateCompass() {
   
   while (millis() - start_time < 20000) { // Quét trong 20 giây
     Wire.beginTransmission(QMC5883P_ADDR);
-    Wire.write(0x00);
+    Wire.write(0x01); // LỖI 1 ĐÃ SỬA: Thay 0x00 thành 0x01 để đọc đúng thanh ghi dữ liệu của chip QMC5883P
     Wire.endTransmission();
 
     Wire.requestFrom((uint8_t)QMC5883P_ADDR, (uint8_t)6);
@@ -120,8 +125,10 @@ void readCompass() {
 
   // Nâng tốc độ lên 50Hz (20ms) để theo kịp Drone
   if (now - lastCompassRead >= 20) { 
+    lastCompassRead = now; // LỖI 2 ĐÃ SỬA: Đưa biến này ra khỏi vòng if(available) để STM32 không bị treo I2C blocking
+
     Wire.beginTransmission(QMC5883P_ADDR);
-    Wire.write(0x00);
+    Wire.write(0x01); // LỖI 1 ĐÃ SỬA: Thay 0x00 thành 0x01 cho chip đời mới P
     Wire.endTransmission();
 
     Wire.requestFrom((uint8_t)QMC5883P_ADDR, (uint8_t)6);
@@ -137,7 +144,7 @@ void readCompass() {
       float y_cal = ((float)raw_y - Y_offset) * Scale_Y;
       float z_cal = -((float)raw_z - Z_offset) * Scale_Z;
 
-      //  BƯỚC 2: BÙ NGHIÊNG 3D (TILT COMPENSATION) 
+      // BƯỚC 2: BÙ NGHIÊNG 3D (TILT COMPENSATION) 
       float roll_rad = goc_roll_thuc_te * PI / 180.0f;
       float pitch_rad = goc_pitch_thuc_te * PI / 180.0f;
 
@@ -150,7 +157,7 @@ void readCompass() {
       float X_horizontal = x_cal * cos_pitch + z_cal * sin_pitch;
       float Y_horizontal = x_cal * sin_roll * sin_pitch + y_cal * cos_roll - z_cal * sin_roll * cos_pitch;
 
-      //  BƯỚC 3: TÍNH GÓC YAW THỰC TẾ
+      // BƯỚC 3: TÍNH GÓC YAW THỰC TẾ
       float heading = atan2(Y_horizontal, X_horizontal) * 180.0f / PI;
 
       heading += declination_angle;
@@ -158,7 +165,7 @@ void readCompass() {
       if (heading < 0.0f) heading += 360.0f;
       if (heading >= 360.0f) heading -= 360.0f;
 
-     static float heading_filtered = -1.0f;
+      static float heading_filtered = -1.0f;
       
       // Khởi tạo lần đọc đầu tiên
       if (heading_filtered < 0.0f) {
@@ -179,10 +186,10 @@ void readCompass() {
       }
 
       goc_la_ban = heading_filtered;
-    lastCompassRead = now;
+    }
   }
 }
-}
+
 void calibrateAndSave() {
     calibrateCompass();  
     saveCalibrationToEEPROM();

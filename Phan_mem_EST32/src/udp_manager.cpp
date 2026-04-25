@@ -151,6 +151,7 @@ void sendTelemetryUDP() {
       telemetryData += "*";
 
       udp.beginPacket(targetIP, targetPort);
+      udp.print(telemetryData);  
       udp.endPacket();
     }
   }
