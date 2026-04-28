@@ -8,12 +8,7 @@
 			"path": "../Phan_mem_STM32"
 		},
 		{
-			"name": "la_ban",
-			"path": "../la_ban"
-		},
-		{
-			"name": "Test_Motor_F450",
-			"path": "../Test_Motor_F450"
+			"path": "drone_gcs"
 		}
 	],
 	"settings": {}

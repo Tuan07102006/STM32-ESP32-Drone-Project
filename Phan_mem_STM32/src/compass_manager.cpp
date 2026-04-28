@@ -34,9 +34,7 @@ void saveCalibrationToEEPROM() {
     EEPROM.put(EEPROM_ADDR_SCALE_Z, Scale_Z);
     EEPROM.write(EEPROM_SIGNATURE, 0xAB); // đánh dấu đã calib
     
-    // LỖI 3 ĐÃ SỬA: Comment lại lệnh commit() vì STM32 đa số ghi thẳng flash qua lệnh put/write, 
-    // tránh lỗi biên dịch "Class has no member named commit". (Nếu thư viện STM32 của bạn CÓ hỗ trợ commit thì hãy mở lại).
-    // EEPROM.commit(); 
+    EEPROM.commit(); 
 }
 
 bool loadCalibrationFromEEPROM() {
@@ -61,7 +59,7 @@ void initCompass() {
 
     // Load calibration từ EEPROM nếu có
     if (!loadCalibrationFromEEPROM()) {
-        // Có thể thêm còi bíp cảnh báo chưa calib ở đây nếu cần
+
     }
 }
 
@@ -95,7 +93,7 @@ void calibrateCompass() {
       if (raw_z < z_min) z_min = raw_z;
       if (raw_z > z_max) z_max = raw_z;
     }
-    delay(20); // Đọc nhanh 50Hz để lấy mẫu dày đặc
+    delay(20); // chỉ dùng delay với các hàm dùng 1 lần, không được phép dùng trong vòng lặp chính của Drone
   }
 
   // 1. Tính toán Hard-Iron (Tâm của hình cầu từ trường)
