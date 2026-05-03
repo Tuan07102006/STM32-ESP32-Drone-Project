@@ -10,62 +10,57 @@
 #endif
 
 float goc_la_ban = 0.0f;
-extern float goc_roll_thuc_te, goc_pitch_thuc_te;
 
 // --- BIẾN HIỆU CHỈNH HARD-IRON (Dịch tâm điểm) ---
-float X_offset = 0.0; 
-float Y_offset = 0.0;
-float Z_offset = 0.0;
+float lech_x = 0.0; 
+float lech_y = 0.0;
+float lech_z = 0.0;
 
 // --- BIẾN HIỆU CHỈNH SOFT-IRON (Nắn tròn Elip) ---
-float Scale_X = 1.0;
-float Scale_Y = 1.0;
-float Scale_Z = 1.0;
+float ty_le_x = 1.0;
+float ty_le_y = 1.0;
+float ty_le_z = 1.0;
 
-// Góc từ thiên (Magnetic Declination) - Chuyển từ Bắc Từ sang Bắc Thật
-float declination_angle = -1.0; 
+// Góc từ thiên (Chuyển từ Bắc Từ sang Bắc Thật)
+float goc_tu_thien = -1.0; 
 
 void saveCalibrationToEEPROM() {
-    EEPROM.put(EEPROM_ADDR_OFFSET_X, X_offset);
-    EEPROM.put(EEPROM_ADDR_OFFSET_Y, Y_offset);
-    EEPROM.put(EEPROM_ADDR_OFFSET_Z, Z_offset);
-    EEPROM.put(EEPROM_ADDR_SCALE_X, Scale_X);
-    EEPROM.put(EEPROM_ADDR_SCALE_Y, Scale_Y);
-    EEPROM.put(EEPROM_ADDR_SCALE_Z, Scale_Z);
-    EEPROM.write(EEPROM_SIGNATURE, 0xAB); // đánh dấu đã calib
-    
-    EEPROM.commit(); 
+    EEPROM.put(EEPROM_ADDR_OFFSET_X, lech_x);
+    EEPROM.put(EEPROM_ADDR_OFFSET_Y, lech_y);
+    EEPROM.put(EEPROM_ADDR_OFFSET_Z, lech_z);
+    EEPROM.put(EEPROM_ADDR_SCALE_X, ty_le_x);
+    EEPROM.put(EEPROM_ADDR_SCALE_Y, ty_le_y);
+    EEPROM.put(EEPROM_ADDR_SCALE_Z, ty_le_z);
+    EEPROM.write(EEPROM_SIGNATURE, 0xAB); 
 }
 
 bool loadCalibrationFromEEPROM() {
     if (EEPROM.read(EEPROM_SIGNATURE) != 0xAB) return false;
-    EEPROM.get(EEPROM_ADDR_OFFSET_X, X_offset);
-    EEPROM.get(EEPROM_ADDR_OFFSET_Y, Y_offset);
-    EEPROM.get(EEPROM_ADDR_OFFSET_Z, Z_offset);
-    EEPROM.get(EEPROM_ADDR_SCALE_X, Scale_X);
-    EEPROM.get(EEPROM_ADDR_SCALE_Y, Scale_Y);
-    EEPROM.get(EEPROM_ADDR_SCALE_Z, Scale_Z);
+    EEPROM.get(EEPROM_ADDR_OFFSET_X, lech_x);
+    EEPROM.get(EEPROM_ADDR_OFFSET_Y, lech_y);
+    EEPROM.get(EEPROM_ADDR_OFFSET_Z, lech_z);
+    EEPROM.get(EEPROM_ADDR_SCALE_X, ty_le_x);
+    EEPROM.get(EEPROM_ADDR_SCALE_Y, ty_le_y);
+    EEPROM.get(EEPROM_ADDR_SCALE_Z, ty_le_z);
     return true;
 }
 
 void initCompass() {
     Wire.beginTransmission(QMC5883P_ADDR);
-    Wire.write(0x0A); Wire.write(0x1D); 
+    Wire.write(QMC5883P_REG_CTRL1); 
+    Wire.write(QMC5883P_VAL_CTRL1); 
     Wire.endTransmission();
 
     Wire.beginTransmission(QMC5883P_ADDR);
-    Wire.write(0x0B); Wire.write(0x01); 
+    Wire.write(QMC5883P_REG_CTRL2); 
+    Wire.write(QMC5883P_VAL_CTRL2); 
     Wire.endTransmission();
 
-    // Load calibration từ EEPROM nếu có
     if (!loadCalibrationFromEEPROM()) {
-
+        // Không có dữ liệu calib lưu sẵn trong EEPROM - sử dụng giá trị mặc định
     }
 }
 
-
-// HÀM CALIBRATION TỔNG HỢP (Hard-iron + Soft-iron 3D)
-// Gọi hàm này, cầm Drone xoay vòng tròn theo MỌI HƯỚNG (như khối Rubik) trong 20s
 void calibrateCompass() {
   int16_t x_min = 32767, x_max = -32768;
   int16_t y_min = 32767, y_max = -32768;
@@ -74,14 +69,14 @@ void calibrateCompass() {
   Serial.println(">>> BAT DAU CALIB: XOAY DRONE THEO CAC TRUC 3D TRONG 20 GIAY...");
   uint32_t start_time = millis();
   
-  while (millis() - start_time < 20000) { // Quét trong 20 giây
+  // LƯU Ý: Vòng lặp này có chứa delay(20), CHỈ GỌI hàm này khi drone dưới mặt đất
+  while (millis() - start_time < 20000) { 
     Wire.beginTransmission(QMC5883P_ADDR);
-    Wire.write(0x01); // LỖI 1 ĐÃ SỬA: Thay 0x00 thành 0x01 để đọc đúng thanh ghi dữ liệu của chip QMC5883P
+    Wire.write(QMC5883P_REG_DATA);
     Wire.endTransmission();
 
     Wire.requestFrom((uint8_t)QMC5883P_ADDR, (uint8_t)6);
     if (Wire.available() >= 6) {
-      // Đọc Endian chuẩn của QMC5883 (LSB trước)
       int16_t raw_x = Wire.read() | (Wire.read() << 8);
       int16_t raw_y = Wire.read() | (Wire.read() << 8);
       int16_t raw_z = Wire.read() | (Wire.read() << 8);
@@ -93,40 +88,35 @@ void calibrateCompass() {
       if (raw_z < z_min) z_min = raw_z;
       if (raw_z > z_max) z_max = raw_z;
     }
-    delay(20); // chỉ dùng delay với các hàm dùng 1 lần, không được phép dùng trong vòng lặp chính của Drone
+    delay(20); 
   }
 
-  // 1. Tính toán Hard-Iron (Tâm của hình cầu từ trường)
-  X_offset = (x_max + x_min) / 2.0;
-  Y_offset = (y_max + y_min) / 2.0;
-  Z_offset = (z_max + z_min) / 2.0;
+  lech_x = (x_max + x_min) / 2.0;
+  lech_y = (y_max + y_min) / 2.0;
+  lech_z = (z_max + z_min) / 2.0;
 
-  // 2. Tính toán Soft-Iron (Bán kính các trục để nắn Elip thành hình cầu)
-  float chord_x = (x_max - x_min) / 2.0;
-  float chord_y = (y_max - y_min) / 2.0;
-  float chord_z = (z_max - z_min) / 2.0;
+  float day_cung_x = (x_max - x_min) / 2.0;
+  float day_cung_y = (y_max - y_min) / 2.0;
+  float day_cung_z = (z_max - z_min) / 2.0;
 
-  float avg_chord = (chord_x + chord_y + chord_z) / 3.0;
+  float trung_binh_day_cung = (day_cung_x + day_cung_y + day_cung_z) / 3.0;
 
-  // Tránh lỗi chia cho 0 nếu cảm biến lỗi
-  if (chord_x > 0 && chord_y > 0 && chord_z > 0) {
-    Scale_X = avg_chord / chord_x;
-    Scale_Y = avg_chord / chord_y;
-    Scale_Z = avg_chord / chord_z;
+  if (day_cung_x > 0 && day_cung_y > 0 && day_cung_z > 0) {
+    ty_le_x = trung_binh_day_cung / day_cung_x;
+    ty_le_y = trung_binh_day_cung / day_cung_y;
+    ty_le_z = trung_binh_day_cung / day_cung_z;
   }
 }
 
-// HÀM ĐỌC VÀ TÍNH TOÁN (Tốc độ 50Hz + Bù nghiêng 3D)
 void readCompass() {
   static uint32_t lastCompassRead = 0;
   uint32_t now = millis();
 
-  // Nâng tốc độ lên 50Hz (20ms) để theo kịp Drone
   if (now - lastCompassRead >= 20) { 
-    lastCompassRead = now; // LỖI 2 ĐÃ SỬA: Đưa biến này ra khỏi vòng if(available) để STM32 không bị treo I2C blocking
+    lastCompassRead = now; 
 
     Wire.beginTransmission(QMC5883P_ADDR);
-    Wire.write(0x01); // LỖI 1 ĐÃ SỬA: Thay 0x00 thành 0x01 cho chip đời mới P
+    Wire.write(QMC5883P_REG_DATA); 
     Wire.endTransmission();
 
     Wire.requestFrom((uint8_t)QMC5883P_ADDR, (uint8_t)6);
@@ -136,13 +126,10 @@ void readCompass() {
       int16_t raw_y = Wire.read() | (Wire.read() << 8);
       int16_t raw_z = Wire.read() | (Wire.read() << 8);
 
-      // BƯỚC 1: KHỬ NHIỄU (CALIBRATION KÉP)
-      // Vừa trừ Offset (Hard), vừa nhân Scale (Soft)
-      float x_cal = ((float)raw_x - X_offset) * Scale_X;
-      float y_cal = ((float)raw_y - Y_offset) * Scale_Y;
-      float z_cal = -((float)raw_z - Z_offset) * Scale_Z;
+      float x_cal = ((float)raw_x - lech_x) * ty_le_x;
+      float y_cal = ((float)raw_y - lech_y) * ty_le_y;
+      float z_cal = -((float)raw_z - lech_z) * ty_le_z;
 
-      // BƯỚC 2: BÙ NGHIÊNG 3D (TILT COMPENSATION) 
       float roll_rad = goc_roll_thuc_te * PI / 180.0f;
       float pitch_rad = goc_pitch_thuc_te * PI / 180.0f;
 
@@ -151,34 +138,29 @@ void readCompass() {
       float cos_pitch = cos(pitch_rad);
       float sin_pitch = sin(pitch_rad);
 
-      // Chiếu vector từ trường 3D lên mặt phẳng ngang tuyệt đối
-      float X_horizontal = x_cal * cos_pitch + z_cal * sin_pitch;
-      float Y_horizontal = x_cal * sin_roll * sin_pitch + y_cal * cos_roll - z_cal * sin_roll * cos_pitch;
+      float x_horizontal = x_cal * cos_pitch + z_cal * sin_pitch;
+      float y_horizontal = x_cal * sin_roll * sin_pitch + y_cal * cos_roll - z_cal * sin_roll * cos_pitch;
 
-      // BƯỚC 3: TÍNH GÓC YAW THỰC TẾ
-      float heading = atan2(Y_horizontal, X_horizontal) * 180.0f / PI;
+      float heading = atan2(y_horizontal, x_horizontal) * 180.0f / PI;
 
-      heading += declination_angle;
+      heading += goc_tu_thien;
 
       if (heading < 0.0f) heading += 360.0f;
       if (heading >= 360.0f) heading -= 360.0f;
 
-      static float heading_filtered = -1.0f;
+      static float heading_filtered = 0.0f;
+      static bool heading_initialized = false;
       
-      // Khởi tạo lần đọc đầu tiên
-      if (heading_filtered < 0.0f) {
+      if (!heading_initialized) {
         heading_filtered = heading;
+        heading_initialized = true;
       } else {
-        // Chú ý: Vì góc là 360 độ (0 và 359 nằm cạnh nhau), 
-        // phải tính khoảng cách ngắn nhất trước khi lọc để Drone không bị xoay ngược
         float diff = heading - heading_filtered;
         if (diff > 180.0f) diff -= 360.0f;
         else if (diff < -180.0f) diff += 360.0f;
         
-        // Công thức lọc: Lấy 70% số cũ + 30% số mới
         heading_filtered += diff * 0.3f; 
         
-        // Chuẩn hóa lại 0 - 360
         if (heading_filtered >= 360.0f) heading_filtered -= 360.0f;
         if (heading_filtered < 0.0f) heading_filtered += 360.0f;
       }

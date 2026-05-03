@@ -1,14 +1,13 @@
 {
 	"folders": [
 		{
-			"path": "../Phan_mem_EST32"
-		},
-		{
-			"name": "Phan_mem_STM32",
-			"path": "../Phan_mem_STM32"
-		},
-		{
 			"path": "drone_gcs"
+		},
+		{
+			"path": "Phan_mem_STM32"
+		},
+		{
+			"path": "Phan_mem_EST32"
 		}
 	],
 	"settings": {}

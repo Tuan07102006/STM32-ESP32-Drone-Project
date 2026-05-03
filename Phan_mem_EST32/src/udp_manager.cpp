@@ -13,17 +13,17 @@ extern GPS_Data GPS_data;
 extern Goi_du_lieu Du_lieu_gui_toi_ESP;
 extern Preferences memory_management;
 
-// ĐỊA CHỈ MÁY TÍNH CỦA BẠN (Sửa lại đúng IP nhà bạn nhé)
+// ĐỊA CHỈ MÁY TÍNH 
 const char* targetIP = "192.168.10.55"; 
 const int targetPort = 12345;
-const int localPort = 12345; // THÊM: Cổng để ESP32 lắng nghe lệnh từ App
+const int localPort = 12345;   //cổng để ESP32 lắng nghe lệnh từ App
 
 // BIẾN CHO FAILSAFE
 unsigned long thoi_gian_nhan_lenh_cuoi = 0; 
 const unsigned long THOI_GIAN_MAT_SONG_TOI_DA = 2000; 
 
 void setupUDP() {
-  udp.begin(localPort); // QUAN TRỌNG: Mở cổng để bắt đầu nhận dữ liệu UDP
+  udp.begin(localPort); //  Mở cổng để bắt đầu nhận dữ liệu UDP
 }
 
 void receiveCommandsUDP() {

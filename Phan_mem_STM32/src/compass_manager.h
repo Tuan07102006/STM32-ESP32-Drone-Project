@@ -3,8 +3,16 @@
 
 #include <Arduino.h>
 
-// Địa chỉ I2C của chip QMC5883P thế hệ mới
 #define QMC5883P_ADDR 0x2C
+
+// --- ĐỊNH NGHĨA THANH GHI I2C ---
+#define QMC5883P_REG_DATA       0x01
+#define QMC5883P_REG_CTRL1      0x0A
+#define QMC5883P_REG_CTRL2      0x0B
+
+// --- ĐỊNH NGHĨA GIÁ TRỊ CẤU HÌNH ---
+#define QMC5883P_VAL_CTRL1      0x1D
+#define QMC5883P_VAL_CTRL2      0x01
 
 #define EEPROM_ADDR_OFFSET_X   0
 #define EEPROM_ADDR_OFFSET_Y   4
@@ -14,9 +22,9 @@
 #define EEPROM_ADDR_SCALE_Z   20
 #define EEPROM_SIGNATURE      24
 
-// Khai báo các hàm sử dụng
 void initCompass();
 void readCompass();
+void calibrateCompass(); 
 void calibrateAndSave();
 
 #endif
