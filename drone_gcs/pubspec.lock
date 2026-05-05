@@ -81,14 +81,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.9"
-  dbus:
-    dependency: transitive
-    description:
-      name: dbus
-      sha256: d0c98dcd4f5169878b6cf8f6e0a52403a9dff371a3e2f019697accbf6f44a270
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.7.12"
   fake_async:
     dependency: transitive
     description:
@@ -105,6 +97,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  ffi_leak_tracker:
+    dependency: transitive
+    description:
+      name: ffi_leak_tracker
+      sha256: "4093d4ef9ca06ffe2786e73bfb25e22aa92112b9bb4ec941f11e3e6b61489a97"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.2"
   file:
     dependency: transitive
     description:
@@ -113,14 +113,70 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
-  file_picker:
+  file_selector:
     dependency: "direct main"
     description:
-      name: file_picker
-      sha256: f13a03000d942e476bc1ff0a736d2e9de711d2f89a95cd4c1d88f861c3348387
+      name: file_selector
+      sha256: bd15e43e9268db636b53eeaca9f56324d1622af30e5c34d6e267649758c84d9a
       url: "https://pub.dev"
     source: hosted
-    version: "11.0.2"
+    version: "1.1.0"
+  file_selector_android:
+    dependency: transitive
+    description:
+      name: file_selector_android
+      sha256: "89243030ea4b3463fb402b44d5eeacc4ccb1c46a88870cb2a5080d693200c1ed"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.2+6"
+  file_selector_ios:
+    dependency: transitive
+    description:
+      name: file_selector_ios
+      sha256: e2ecf2885c121691ce13b60db3508f53c01f869fb6e8dc5c1cfa771e4c46aeca
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.3+5"
+  file_selector_linux:
+    dependency: transitive
+    description:
+      name: file_selector_linux
+      sha256: "2567f398e06ac72dcf2e98a0c95df2a9edd03c2c2e0cacd4780f20cdf56263a0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.4"
+  file_selector_macos:
+    dependency: transitive
+    description:
+      name: file_selector_macos
+      sha256: "5e0bbe9c312416f1787a68259ea1505b52f258c587f12920422671807c4d618a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.5"
+  file_selector_platform_interface:
+    dependency: transitive
+    description:
+      name: file_selector_platform_interface
+      sha256: "35e0bd61ebcdb91a3505813b055b09b79dfdc7d0aee9c09a7ba59ae4bb13dc85"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.7.0"
+  file_selector_web:
+    dependency: transitive
+    description:
+      name: file_selector_web
+      sha256: c4c0ea4224d97a60a7067eca0c8fd419e708ff830e0c83b11a48faf566cec3e7
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.4+2"
+  file_selector_windows:
+    dependency: transitive
+    description:
+      name: file_selector_windows
+      sha256: "62197474ae75893a62df75939c777763d39c2bc5f73ce5b88497208bc269abfd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.3+5"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -134,14 +190,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.0"
-  flutter_plugin_android_lifecycle:
-    dependency: transitive
-    description:
-      name: flutter_plugin_android_lifecycle
-      sha256: "38d1c268de9097ff59cf0e844ac38759fc78f76836d37edad06fa21e182055a0"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.34"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -152,70 +200,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  gamepads:
-    dependency: "direct main"
-    description:
-      name: gamepads
-      sha256: "2c44199a6d7839c320a549298603271e76ea115c660ea50a5ed91bf50df2a6b1"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.10+2"
-  gamepads_android:
-    dependency: transitive
-    description:
-      name: gamepads_android
-      sha256: aa71cb514f6aea3fddb21734ff52f38870c5054100fc44b798b6b9f91c4eef16
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.7"
-  gamepads_darwin:
-    dependency: transitive
-    description:
-      name: gamepads_darwin
-      sha256: a7668dc17f2e4b95c29c54e961c3ef6e34e3997718383e96dd0bdf5a5c3b03c8
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.2+4"
-  gamepads_ios:
-    dependency: transitive
-    description:
-      name: gamepads_ios
-      sha256: "514a37d4b1b17bf47fe911ee1b750eca6be2b8abbdb71f200b9ad3186014d413"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.3+3"
-  gamepads_linux:
-    dependency: transitive
-    description:
-      name: gamepads_linux
-      sha256: "80bf70df6da6185926e6d8b2feb98e725e6fe99290afafaea91dba471e8c1c1e"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.2"
-  gamepads_platform_interface:
-    dependency: transitive
-    description:
-      name: gamepads_platform_interface
-      sha256: "9ddb3b61c780284a17739d759929d2e32b912d12d9145ee493ffe2b43fc6256a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.3"
-  gamepads_web:
-    dependency: transitive
-    description:
-      name: gamepads_web
-      sha256: "860eb4f11fdb6dfcf18f793a491282747007909075d161373df7f067dfddb9a4"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.1+1"
-  gamepads_windows:
-    dependency: transitive
-    description:
-      name: gamepads_windows
-      sha256: "650b68a4bc5d729abf12f0d2d3a53c05e4070a288c7e5575edfd485774550d8c"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.0+1"
   glob:
     dependency: transitive
     description:
@@ -232,6 +216,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.3"
+  http:
+    dependency: transitive
+    description:
+      name: http
+      sha256: "87721a4a50b19c7f1d49001e51409bddc46303966ce89a65af4f4e6004896412"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.6.0"
+  http_parser:
+    dependency: transitive
+    description:
+      name: http_parser
+      sha256: "178d74305e7866013777bab2c3d8726205dc5a4dd935297175b19a23a2e66571"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.2"
   intl:
     dependency: "direct main"
     description:
@@ -400,14 +400,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
-  petitparser:
-    dependency: transitive
-    description:
-      name: petitparser
-      sha256: "91bd59303e9f769f108f8df05e371341b15d59e995e6806aefab827b58336675"
-      url: "https://pub.dev"
-    source: hosted
-    version: "7.0.2"
   platform:
     dependency: transitive
     description:
@@ -529,10 +521,18 @@ packages:
     dependency: transitive
     description:
       name: win32
-      sha256: d7cb55e04cd34096cd3a79b3330245f54cb96a370a1c27adb3c84b917de8b08e
+      sha256: ba7d5750e3441caa1bbe31d9e516348fcf8dfcb32aa29ef87a844a59f4d1f1d0
       url: "https://pub.dev"
     source: hosted
-    version: "5.15.0"
+    version: "6.1.0"
+  win32_gamepad:
+    dependency: "direct main"
+    description:
+      name: win32_gamepad
+      sha256: "30ace4cd0b2a68d588b8de40afcf139261ecbf5e00bf99b3f3522865566dc18c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.11"
   xdg_directories:
     dependency: transitive
     description:
@@ -541,14 +541,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
-  xml:
-    dependency: transitive
-    description:
-      name: xml
-      sha256: "971043b3a0d3da28727e40ed3e0b5d18b742fa5a68665cca88e74b7876d5e025"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.6.1"
   yaml:
     dependency: transitive
     description:

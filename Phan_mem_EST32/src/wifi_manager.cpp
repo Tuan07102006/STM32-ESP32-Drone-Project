@@ -2,25 +2,31 @@
 #include "config.h"
 #include <WiFi.h>
 
-const char* ssid = "TrungThuy_T2_NEW";   
-const char* password = "thuy@1977";
+const char* ssid = "LAN";   
+const char* password = "12345678";
 unsigned long lastReconnectMillis = 0;
 const unsigned long reconnectInterval = 4000;
+
+// Khai báo cấu hình IP Tĩnh
+//IPAddress local_IP(10, 76, 12, 54);  // Cố định IP cho ESP32-S3
+//IPAddress gateway(10, 76, 12, 1);
+//IPAddress subnet(255, 255, 255, 0);
 
 void setupwifi() {
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);
+  
+
   WiFi.begin(ssid, password);
   
   Serial.print("Dang ket noi WiFi: ");
   Serial.println(ssid);
 
-  // --- THÊM ĐOẠN NÀY ĐỂ ĐỢI KẾT NỐI ---
   int timeout = 0;
-  while (WiFi.status() != WL_CONNECTED && timeout < 20) { // Đợi tối đa 10 giây
-
+  while (WiFi.status() != WL_CONNECTED && timeout < 20) {
     Serial.print(".");
     timeout++;
+    delay(500);
   }
 
   if (WiFi.status() == WL_CONNECTED) {

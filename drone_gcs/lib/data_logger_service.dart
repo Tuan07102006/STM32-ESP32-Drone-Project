@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart'; // Dùng thư viện chính chủ Google
 import 'package:intl/intl.dart';
 
 class DataLoggerService {
@@ -13,19 +13,21 @@ class DataLoggerService {
 
     String defaultName = "FlightLog_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv";
 
-    String? outputFile = await FilePicker.platform.saveFile(
-      dialogTitle: 'Chọn nơi lưu nhật ký bay (Blackbox)',
-      fileName: defaultName,
-      type: FileType.custom,
-      allowedExtensions: ['csv'],
+    // Hiện bảng Save As để người dùng chọn vị trí lưu và sửa tên file
+    final FileSaveLocation? result = await getSaveLocation(
+      suggestedName: defaultName,
+      acceptedTypeGroups: [
+        const XTypeGroup(label: 'CSV Data', extensions: ['csv'])
+      ],
     );
 
-    if (outputFile == null) {
+    // Nếu người dùng ấn Hủy (Cancel) không lưu nữa
+    if (result == null) {
       return false; 
     }
 
-    currentFilePath = outputFile;
-    File file = File(outputFile);
+    currentFilePath = result.path;
+    File file = File(currentFilePath!);
     
     _sink = file.openWrite(mode: FileMode.write);
 

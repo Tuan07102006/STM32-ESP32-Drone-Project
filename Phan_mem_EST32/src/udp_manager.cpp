@@ -14,9 +14,9 @@ extern Goi_du_lieu Du_lieu_gui_toi_ESP;
 extern Preferences memory_management;
 
 // ĐỊA CHỈ MÁY TÍNH 
-const char* targetIP = "192.168.10.55"; 
-const int targetPort = 12345;
-const int localPort = 12345;   //cổng để ESP32 lắng nghe lệnh từ App
+const char* targetIP = "192.168.137.79"; 
+const int targetPort = 34542;
+const int localPort = 34542;   //cổng để ESP32 lắng nghe lệnh từ App
 
 // BIẾN CHO FAILSAFE
 unsigned long thoi_gian_nhan_lenh_cuoi = 0; 
@@ -29,19 +29,18 @@ void setupUDP() {
 void receiveCommandsUDP() {
   int packetSize = udp.parsePacket(); 
   if (packetSize) {
-    char packetBuffer[255];
+    // Sửa lỗi: Tăng kích thước mảng lên 256 để chứa ký tự '\0' một cách an toàn
+    char packetBuffer[256];
     int len = udp.read(packetBuffer, 255);
-    if (len > 0) packetBuffer[len] = 0; // Kết thúc chuỗi
+    if (len > 0) packetBuffer[len] = '\0'; // Kết thúc chuỗi chuẩn C
     
     String incomingData = String(packetBuffer);
     thoi_gian_nhan_lenh_cuoi = millis(); 
 
-    // LỆNH 1: ĐIỀU KHIỂN BAY TỪ JOYSTICK (Gửi liên tục, KHÔNG LƯU FLASH)
-    // Định dạng: #Ga,Roll,Pitch,Yaw,Arm*
+    // LỆNH 1: ĐIỀU KHIỂN BAY TỪ JOYSTICK
     if (incomingData.startsWith("#") && incomingData.endsWith("*")) {
       float tempGa, tempRoll, tempPitch, tempYaw;
       int tempArm;
-      // Quét 5 biến
       int parsed = sscanf(incomingData.c_str(), "#%f,%f,%f,%f,%d*", &tempGa, &tempRoll, &tempPitch, &tempYaw, &tempArm);
       
       if (parsed == 5) {
@@ -53,14 +52,9 @@ void receiveCommandsUDP() {
       }
     }
 
-    // ==============================================================
-    // LỆNH 2: CẬP NHẬT PID TỪ APP (Chỉ gửi 1 lần khi bấm nút Lưu trên App)
-    // Định dạng: @Kp_r,Ki_r,Kd_r,Kp_p,Ki_p,Kd_p,Kp_y,Ki_y,Kd_y*
-    // ==============================================================
+    // LỆNH 2: CẬP NHẬT PID
     else if (incomingData.startsWith("@") && incomingData.endsWith("*")) {
       float r_p, r_i, r_d, p_p, p_i, p_d, y_p, y_i, y_d;
-      
-      // Quét 9 biến PID
       int parsed = sscanf(incomingData.c_str(), "@%f,%f,%f,%f,%f,%f,%f,%f,%f*", 
                           &r_p, &r_i, &r_d, &p_p, &p_i, &p_d, &y_p, &y_i, &y_d);
       
@@ -68,25 +62,20 @@ void receiveCommandsUDP() {
         Lenh_gui_di.Kp_roll_moi = r_p;
         Lenh_gui_di.Ki_roll_moi = r_i;
         Lenh_gui_di.Kd_roll_moi = r_d;
-        
         Lenh_gui_di.Kp_pitch_moi = p_p;
         Lenh_gui_di.Ki_pitch_moi = p_i;
         Lenh_gui_di.Kd_pitch_moi = p_d;
-
         Lenh_gui_di.Kp_yaw_moi = y_p;
         Lenh_gui_di.Ki_yaw_moi = y_i;
         
         memory_management.putFloat("Kp_roll", r_p);
         memory_management.putFloat("Ki_roll", r_i);
         memory_management.putFloat("Kd_roll", r_d);
-
         memory_management.putFloat("Kp_pitch", p_p);
         memory_management.putFloat("Ki_pitch", p_i);
         memory_management.putFloat("Kd_pitch", p_d);
-
         memory_management.putFloat("Kp_yaw", y_p);
         memory_management.putFloat("Ki_yaw", y_i);
-        
       }
     }
   }
@@ -97,12 +86,14 @@ void checkFailsafe() {
 
   if (millis() - thoi_gian_nhan_lenh_cuoi > THOI_GIAN_MAT_SONG_TOI_DA) {
     if (Lenh_gui_di.Trang_thai_Arm == 1) {
-      Serial.println("\n[CẢNH BÁO] !!! MẤT KẾT NỐI APP !!! KÍCH HOẠT FAILSAFE !!!");
-      Lenh_gui_di.Muc_Ga = 1000; 
+      Serial.println("\n[CẢNH BÁO] !!! MẤT KẾT NỐI APP !!! KÍCH HOẠT HẠ CÁNH MỀM !!!");
+      
+      // Sửa lỗi Failsafe: Đưa ga về mức hạ cánh chậm thay vì ngắt đột ngột
+      Lenh_gui_di.Muc_Ga = 1350; // Mức ga vừa đủ để F450 hạ cánh từ từ (Tùy chỉnh lại theo thực tế)
       Lenh_gui_di.Diem_dat_Roll = 0.0;
       Lenh_gui_di.Diem_dat_Pitch = 0.0;
       Lenh_gui_di.Diem_dat_Yaw = 0.0;
-      Lenh_gui_di.Trang_thai_Arm = 0; 
+      Lenh_gui_di.Trang_thai_Arm = 1; // Vẫn giữ Arm để quay cánh quạt
     }
   }
 }

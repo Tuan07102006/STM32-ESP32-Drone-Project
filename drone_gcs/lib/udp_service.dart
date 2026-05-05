@@ -4,15 +4,15 @@ import 'package:flutter/foundation.dart';
 
 class UDPService {
   RawDatagramSocket? _udpSocket;
-  final int _localPort = 12345;
-  final String _targetIP = "192.168.10.55"; // Địa chỉ IP của ESP32
-  final int _targetPort = 12345;
+  final int _localPort = 34542;
+  final String _targetIP = "192.168.137.116"; // Địa chỉ IP của ESP32
+  final int _targetPort = 34542;
 
   final StreamController<Map<String, dynamic>> _telemetryController = StreamController<Map<String, dynamic>>.broadcast();
   Stream<Map<String, dynamic>> get telemetryStream => _telemetryController.stream;
 
   Future<void> startListening() async {
-    _udpSocket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, _localPort);
+    _udpSocket = await RawDatagramSocket.bind(InternetAddress("192.168.137.79"), _localPort);
     debugPrint('UDP listening on port: ${_udpSocket!.port}'); 
 
     _udpSocket!.listen((RawSocketEvent event) {
@@ -31,37 +31,38 @@ class UDPService {
       String data = message.substring(1, message.length - 1);
       List<String> values = data.split(",");
 
-      if (values.length >= 29) { 
+      // SỬA 1: Đổi 29 thành 28
+      if (values.length >= 28) { 
         try {
           _telemetryController.add({
-            'Roll': double.parse(values[0]),
-            'Pitch': double.parse(values[1]),
-            'Yaw': double.parse(values[2]),
-            'Dien_ap': double.parse(values[3]),
-            'Dong_dien': double.parse(values[4]),
-            'Do_cao': double.parse(values[5]),
-            'Ap_xuat': double.parse(values[6]),
-            'Nhiet_do': double.parse(values[7]),
-            'gps_lat': double.parse(values[8]),
-            'gps_lng': double.parse(values[9]),
-            'gps_sat': int.parse(values[10]),
-            'gps_hdop': double.parse(values[11]),
-            'gps_speed': double.parse(values[12]),
-            'gps_alt': double.parse(values[13]),
-            'gps_course': double.parse(values[14]),
-            'Muc_Ga': double.parse(values[15]),
-            'Diem_dat_Roll': double.parse(values[16]),
-            'Diem_dat_Pitch': double.parse(values[17]),
-            'Diem_dat_Yaw': double.parse(values[18]),
-            'Kp_roll_moi': double.parse(values[19]),
-            'Ki_roll_moi': double.parse(values[20]),
-            'Kd_roll_moi': double.parse(values[21]),
-            'Kp_pitch_moi': double.parse(values[22]),
-            'Ki_pitch_moi': double.parse(values[23]),
-            'Kd_pitch_moi': double.parse(values[24]),
-            'Kp_yaw_moi': double.parse(values[25]),
-            'Ki_yaw_moi': double.parse(values[26]),
-            'Trang_thai_Arm': int.parse(values[28]),
+            'Roll': double.tryParse(values[0]) ?? 0.0,
+            'Pitch': double.tryParse(values[1]) ?? 0.0,
+            'Yaw': double.tryParse(values[2]) ?? 0.0,
+            'Dien_ap': double.tryParse(values[3]) ?? 0.0,
+            'Dong_dien': double.tryParse(values[4]) ?? 0.0,
+            'Do_cao': double.tryParse(values[5]) ?? 0.0,
+            'Ap_xuat': double.tryParse(values[6]) ?? 0.0,
+            'Nhiet_do': double.tryParse(values[7]) ?? 0.0,
+            'gps_lat': double.tryParse(values[8]) ?? 0.0,
+            'gps_lng': double.tryParse(values[9]) ?? 0.0,
+            'gps_sat': int.tryParse(values[10]) ?? 0,
+            'gps_hdop': double.tryParse(values[11]) ?? 0.0,
+            'gps_speed': double.tryParse(values[12]) ?? 0.0,
+            'gps_alt': double.tryParse(values[13]) ?? 0.0,
+            'gps_course': double.tryParse(values[14]) ?? 0.0,
+            'Muc_Ga': double.tryParse(values[15]) ?? 0.0,
+            'Diem_dat_Roll': double.tryParse(values[16]) ?? 0.0,
+            'Diem_dat_Pitch': double.tryParse(values[17]) ?? 0.0,
+            'Diem_dat_Yaw': double.tryParse(values[18]) ?? 0.0,
+            'Kp_roll_moi': double.tryParse(values[19]) ?? 0.0,
+            'Ki_roll_moi': double.tryParse(values[20]) ?? 0.0,
+            'Kd_roll_moi': double.tryParse(values[21]) ?? 0.0,
+            'Kp_pitch_moi': double.tryParse(values[22]) ?? 0.0,
+            'Ki_pitch_moi': double.tryParse(values[23]) ?? 0.0,
+            'Kd_pitch_moi': double.tryParse(values[24]) ?? 0.0,
+            'Kp_yaw_moi': double.tryParse(values[25]) ?? 0.0,
+            'Ki_yaw_moi': double.tryParse(values[26]) ?? 0.0,
+            'Trang_thai_Arm': int.tryParse(values[27]) ?? 0,
           });
         } catch (e) {
           debugPrint('Error parsing telemetry data: $e'); 

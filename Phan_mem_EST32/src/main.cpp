@@ -12,7 +12,7 @@
 
 // TẠO THỰC THỂ CHO CÁC BIẾN TOÀN CỤC
 Goi_du_lieu Du_lieu_gui_toi_ESP;
-Lenh_Dieu_Khien Lenh_gui_di = {125.0, 0.0, 0.0, 0.0,   1.5, 0.05, 1.2,   1.5, 0.05, 1.2,   2.0, 0.1,   0};
+Lenh_Dieu_Khien Lenh_gui_di = {1000.0, 0.0, 0.0, 0.0,   1.5, 0.05, 1.2,   1.5, 0.05, 1.2,   2.0, 0.1,   0};
 
 GPS_Data GPS_data;           
 //Device_Status Device_status; 
@@ -40,6 +40,7 @@ void loop() {
   readDataFromSTM32();                    
   
   sendTelemetryUDP();   
-  sendDataToSTM32();  
+  sendDataToSTM32(); 
+  Serial.println("goc-la-ban: " + String(Du_lieu_gui_toi_ESP.goc_la_ban)); 
 
 }

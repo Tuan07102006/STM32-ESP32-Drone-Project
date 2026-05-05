@@ -6,9 +6,9 @@
 
 #include "generated_plugin_registrant.h"
 
-#include <gamepads_windows/gamepads_windows_plugin_c_api.h>
+#include <file_selector_windows/file_selector_windows.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
-  GamepadsWindowsPluginCApiRegisterWithRegistrar(
-      registry->GetRegistrarForPlugin("GamepadsWindowsPluginCApi"));
+  FileSelectorWindowsRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("FileSelectorWindows"));
 }

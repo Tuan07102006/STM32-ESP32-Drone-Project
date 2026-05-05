@@ -26,6 +26,7 @@ struct __attribute__((packed)) Goi_du_lieu {
   float Gia_toc_x, Gia_toc_y, Gia_toc_z;
   float Dien_ap, Dong_dien;
   float Do_cao, Ap_xuat, Nhiet_do;
+  float goc_la_ban;
 };
 
 // Thùng hàng nhập khẩu: ESP32 -> STM32

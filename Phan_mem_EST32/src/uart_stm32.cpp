@@ -25,12 +25,11 @@ void sendDataToSTM32() {
 }
 
 void readDataFromSTM32() {
-  // Chỉ đọc khi có đủ một gói dữ liệu trong bộ đệm (2 byte header + struct)
-  // Việc này giúp ESP32 chạy lướt qua cực nhanh nếu dữ liệu chưa tới đủ
   while (SerialSTM.available() >= (sizeof(Goi_du_lieu) + 2)) {
     if (SerialSTM.read() == 0xAA) {
-      if (SerialSTM.read() == 0xBB) {
-        // Đọc trực tiếp vào vùng nhớ, tốc độ cao nhất có thể
+      // Dùng peek() để kiểm tra byte tiếp theo có phải 0xBB không mà chưa vội lấy ra
+      if (SerialSTM.peek() == 0xBB) {
+        SerialSTM.read(); // Kéo byte 0xBB ra khỏi bộ đệm
         SerialSTM.readBytes((uint8_t*)&Du_lieu_gui_toi_ESP, sizeof(Goi_du_lieu));
       }
     }

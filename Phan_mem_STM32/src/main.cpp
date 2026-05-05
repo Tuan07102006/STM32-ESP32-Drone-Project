@@ -8,6 +8,7 @@
 #include "uart_manager.h"
 #include "compass_manager.h"
 #include "calibrateESC.h"
+#include "Buzzer_manager.h"
 
 Goi_du_lieu Du_lieu_gui_toi_ESP;
 
@@ -22,6 +23,7 @@ float goc_roll_thuc_te=0, goc_pitch_thuc_te=0, goc_yaw_thuc_te=0;
 unsigned long time_prev = 0;
 
 void setup() {
+  khoi_tao_buzzer();
   Wire.setSCL(I2C_SCL); Wire.setSDA(I2C_SDA); Wire.begin();
   initMotors();
   initCompass();
