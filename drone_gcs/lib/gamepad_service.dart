@@ -31,9 +31,9 @@ class GamepadService {
     try {
       _gamepad = Gamepad(0);
       if (_gamepad!.isConnected) {
-        debugPrint("🎮 Đã kết nối tay cầm XInput (Win32)");
+        debugPrint(" Đã kết nối tay cầm XInput (Win32)");
       } else {
-        debugPrint("⚠️ Chưa tìm thấy tay cầm. Hãy cắm tay cầm vào và thử lại.");
+        debugPrint(" Chưa tìm thấy tay cầm. Hãy cắm tay cầm vào và thử lại.");
       }
       _pollingTimer = Timer.periodic(const Duration(milliseconds: 50), _pollGamepad);
     } catch (e) {

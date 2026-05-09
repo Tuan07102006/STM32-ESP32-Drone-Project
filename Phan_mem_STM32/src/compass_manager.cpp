@@ -10,7 +10,6 @@
 #define PI 3.14159265358979323846
 #endif
 
-extern Goi_du_lieu Du_lieu_gui_toi_ESP;
 
 extern float goc_roll_thuc_te;
 extern float goc_pitch_thuc_te;
@@ -173,7 +172,7 @@ void readCompass() {
         if (heading_filtered >= 360.0f) heading_filtered -= 360.0f;
         if (heading_filtered < 0.0f) heading_filtered += 360.0f;
       }
-      Du_lieu_gui_toi_ESP.goc_la_ban = heading_filtered;
+      goc_la_ban = heading_filtered;
     }
   }
 }

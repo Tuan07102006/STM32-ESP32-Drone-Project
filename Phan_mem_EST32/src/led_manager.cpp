@@ -10,7 +10,7 @@ bool trang_thai_led = false;
 
 void setupled() {
   led_thong_bao.begin();
-  led_thong_bao.setBrightness(50);
+  led_thong_bao.setBrightness(30);
   led_thong_bao.setPixelColor(0, led_thong_bao.Color(255, 255, 255)); // Trắng khi khởi động
   led_thong_bao.show();
 }

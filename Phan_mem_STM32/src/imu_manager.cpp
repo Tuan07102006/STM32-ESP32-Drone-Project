@@ -35,7 +35,7 @@ void initIMU() {
   SPI.setMISO(SDO_MISO);
   SPI.setMOSI(SDA_MOSI);
   SPI.begin();
-  writeReg(0x6B, 0x00);  // Wake up MPU
+  writeReg(0x6B, 0x00); 
 }
 
 void updateIMUCalculations(float dt) {
@@ -91,6 +91,5 @@ void updateIMUCalculations(float dt) {
   Du_lieu_gui_toi_ESP.Gia_toc_y = pitchAcc;
   Du_lieu_gui_toi_ESP.Gia_toc_z = gY;   // tốc độ góc yaw
 
-  int16_t temp_raw = (buffer[6] << 8) | buffer[7];
-  Du_lieu_gui_toi_ESP.Nhiet_do = (temp_raw / 333.87) + 21.0;
+
 }

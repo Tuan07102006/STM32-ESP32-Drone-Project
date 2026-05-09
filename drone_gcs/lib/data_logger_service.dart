@@ -7,6 +7,9 @@ class DataLoggerService {
   bool isLogging = false;
   IOSink? _sink;
   String? currentFilePath;
+  
+  // MỚI: Biến đếm số thứ tự mẫu (thay cho mốc thời gian ms)
+  int _sampleCount = 0;
 
   Future<bool> startLogging() async {
     if (isLogging) return false;
@@ -21,7 +24,6 @@ class DataLoggerService {
       ],
     );
 
-    // Nếu người dùng ấn Hủy (Cancel) không lưu nữa
     if (result == null) {
       return false; 
     }
@@ -31,8 +33,11 @@ class DataLoggerService {
     
     _sink = file.openWrite(mode: FileMode.write);
 
-    // Ghi tiêu đề (Header)
-    _sink?.writeln("Timestamp(ms),Time_Readable,Roll,Pitch,Yaw,Muc_Ga_Cmd,Diem_Dat_Roll,Diem_Dat_Pitch,Do_Cao,Dien_Ap");
+    // GHI TIÊU ĐỀ (Đổi Time_ms thành Sample_Index)
+    _sink?.writeln("Sample_Index,Roll,Pitch,Yaw,Muc_Ga_Cmd,Diem_Dat_Roll,Diem_Dat_Pitch,Do_Cao,Dien_Ap");
+
+    // Reset bộ đếm về 0 mỗi khi bắt đầu ghi file mới
+    _sampleCount = 0;
 
     isLogging = true;
     debugPrint("🔴 Đã bắt đầu ghi log tại: $currentFilePath");
@@ -42,10 +47,11 @@ class DataLoggerService {
   void logData(Map<String, dynamic> data) {
     if (!isLogging || _sink == null) return;
 
-    int timestampMs = DateTime.now().millisecondsSinceEpoch;
-    String timeReadable = DateFormat('HH:mm:ss.SSS').format(DateTime.now());
+    // MỚI: Tăng giá trị bộ đếm lên 1 mỗi khi có một dòng dữ liệu mới được đẩy tới
+    _sampleCount++;
 
-    String logLine = "$timestampMs,$timeReadable,${data['Roll']},${data['Pitch']},${data['Yaw']},${data['Muc_Ga']},${data['Diem_dat_Roll']},${data['Diem_dat_Pitch']},${data['Do_cao']},${data['Dien_ap']}";
+    // CHUỖI LOG: Ghi số thứ tự mẫu + dữ liệu cảm biến
+    String logLine = "$_sampleCount,${data['Roll']},${data['Pitch']},${data['Yaw']},${data['Muc_Ga']},${data['Diem_dat_Roll']},${data['Diem_dat_Pitch']},${data['Do_cao']},${data['Dien_ap']}";
 
     _sink?.writeln(logLine);
   }

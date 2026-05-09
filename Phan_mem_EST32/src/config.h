@@ -19,7 +19,6 @@ struct __attribute__((packed)) Goi_du_lieu {
   float Gia_toc_x, Gia_toc_y, Gia_toc_z;
   float Dien_ap, Dong_dien;
   float Do_cao, Ap_xuat, Nhiet_do;
-  float goc_la_ban;
 };
 
 // Thùng hàng nhập khẩu: ESP32 -> STM32
@@ -40,20 +39,15 @@ struct __attribute__((packed)) Lenh_Dieu_Khien {
 };
 
 struct __attribute__((packed)) GPS_Data {
-double gps_lat;     // Vĩ độ
-double gps_lng;     // Kinh độ
-int    gps_sat;     // Số lượng vệ tinh
-double gps_hdop;    // Độ chính xác (Càng nhỏ càng tốt, < 2.0 là bay an toàn)
-double gps_speed;   // Vận tốc (m/s)
-double gps_alt;     // Độ cao GPS (mét)
-double gps_course;  // Hướng di chuyển (Độ, giống la bàn)
+  float gps_lat;    // Vĩ độ (4 bytes)
+  float gps_lng;    // Kinh độ (4 bytes)
+  float gps_alt;    // Độ cao GPS (4 bytes)
+  float gps_speed;  // Vận tốc (4 bytes)
+  float gps_course; // Hướng di chuyển (4 bytes)
+  float gps_hdop;   // Độ chính xác (4 bytes)
+  uint8_t gps_sat;  // Số lượng vệ tinh (1 byte) - Vì số vệ tinh max của NEO-8M chỉ quanh 24-30
 };
 
-//struct __attribute__((packed)) Device_Status {
- // bool stm32_connected;
- // bool gps_fixed;
-  //bool wifi_connected;
-//};
 
 // --- BIẾN TOÀN CỤC ---
 extern Goi_du_lieu Du_lieu_gui_toi_ESP;

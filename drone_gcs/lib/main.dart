@@ -301,7 +301,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       color: Colors.blueGrey.shade800,
       elevation: 2,
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: accentColor.withOpacity(0.3), width: 2),
+        side: BorderSide(color: accentColor.withOpacity(0.5), width: 2),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
@@ -508,8 +508,6 @@ class GamepadVisualizer extends StatelessWidget {
                     _placeAt(w, h, 0.78, 0.55, _buildActionButtons(w * 0.18, btnA, btnB, btnX, btnY)),
                     _placeAt(w, h, 0.38, 0.80, _buildDPad(w * 0.14, dpadUp, dpadDown, dpadLeft, dpadRight)),
                     _placeAt(w, h, 0.62, 0.80, _buildStick(w * 0.16, stickRightX, stickRightY)),
-                    _placeAt(w, h, 0.45, 0.55, _buildCenterButton(_getVal(states, "b_8") > 0.5)),
-                    _placeAt(w, h, 0.55, 0.55, _buildCenterButton(_getVal(states, "b_9") > 0.5)),
                   ],
                 );
               },
@@ -564,17 +562,7 @@ class GamepadVisualizer extends StatelessWidget {
     );
   }
 
-  Widget _buildCenterButton(bool isPressed) {
-    return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(
-        color: isPressed ? Colors.cyan : Colors.white24,
-        shape: BoxShape.circle,
-        boxShadow: isPressed ? [const BoxShadow(color: Colors.cyan, blurRadius: 8)] : [],
-      ),
-    );
-  }
+ 
 
   Widget _buildStick(double size, double x, double y) {
     double maxOffset = size * 0.3; 

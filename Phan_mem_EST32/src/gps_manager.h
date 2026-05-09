@@ -3,6 +3,6 @@
 
 
 void setupGPS();
-void readGPSRaw();
+bool readGPSRaw();
 
 #endif

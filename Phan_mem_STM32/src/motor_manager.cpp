@@ -34,30 +34,41 @@ void initMotors() {
   T2->setCaptureCompare(3, 1000, MICROSEC_COMPARE_FORMAT);
   T2->setCaptureCompare(4, 1000, MICROSEC_COMPARE_FORMAT);
 
-  // =========================================================
-  // 6. ĐỒNG BỘ HÓA PHẦN CỨNG BẰNG THANH GHI (THAY VÌ DÙNG resume)
-  // =========================================================
-  
-  // Bước 6.1: Tạm dừng cả 2 Timer (Clear bit CEN trong thanh ghi CR1)
+  // 6. ĐỒNG BỘ HÓA PHẦN CỨNG BẰNG THANH GHI
   TIM2->CR1 &= ~TIM_CR1_CEN;
   TIM3->CR1 &= ~TIM_CR1_CEN;
 
-  // Bước 6.2: Ép thông số đếm của TIM3 giống hệt TIM2 
-  // (Đảm bảo tần số đếm bằng nhau tuyệt đối, không phụ thuộc thư viện tính toán)
   TIM3->PSC = TIM2->PSC;
   TIM3->ARR = TIM2->ARR;
 
-  // Bước 6.3: Reset bộ đếm về 0 để xuất phát cùng vạch
   TIM2->CNT = 0;
   TIM3->CNT = 0;
 
-  // Bước 6.4: Khóa ngắt toàn cục (Không cho CPU làm việc khác)
   noInterrupts(); 
 
-  // Bước 6.5: Bật 2 timer liên tiếp (Chỉ lệch 1 chu kỳ máy - cực kỳ sát nhau)
   TIM2->CR1 |= TIM_CR1_CEN;
   TIM3->CR1 |= TIM_CR1_CEN;
 
-  // Bước 6.6: Mở lại ngắt
   interrupts();
+}
+
+void Set_Motor_Speed(float m1, float m2, float m3, float m4) {
+  if (Lenh_tu_ESP.Trang_thai_Arm == 0) {
+    // Khi chưa arm, giữ min
+    T3->setCaptureCompare(2, 1000, MICROSEC_COMPARE_FORMAT);
+    T2->setCaptureCompare(2, 1000, MICROSEC_COMPARE_FORMAT);
+    T2->setCaptureCompare(3, 1000, MICROSEC_COMPARE_FORMAT);
+    T2->setCaptureCompare(4, 1000, MICROSEC_COMPARE_FORMAT);
+    return;
+  }
+
+  uint32_t safe_m1 = constrain((int)m1, 1000, 2000);
+  uint32_t safe_m2 = constrain((int)m2, 1000, 2000);
+  uint32_t safe_m3 = constrain((int)m3, 1000, 2000);
+  uint32_t safe_m4 = constrain((int)m4, 1000, 2000);
+
+  T3->setCaptureCompare(2, safe_m1, MICROSEC_COMPARE_FORMAT);
+  T2->setCaptureCompare(2, safe_m2, MICROSEC_COMPARE_FORMAT);
+  T2->setCaptureCompare(3, safe_m3, MICROSEC_COMPARE_FORMAT);
+  T2->setCaptureCompare(4, safe_m4, MICROSEC_COMPARE_FORMAT);
 }

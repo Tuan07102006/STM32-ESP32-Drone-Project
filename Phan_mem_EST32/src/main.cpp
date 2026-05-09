@@ -41,6 +41,5 @@ void loop() {
   
   sendTelemetryUDP();   
   sendDataToSTM32(); 
-  Serial.println("goc-la-ban: " + String(Du_lieu_gui_toi_ESP.goc_la_ban)); 
 
 }
