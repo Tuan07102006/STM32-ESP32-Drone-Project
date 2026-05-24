@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:drone_gcs/udp_service.dart';
 import 'package:drone_gcs/gamepad_service.dart'; 
 import 'package:drone_gcs/data_logger_service.dart'; 
+import 'telemetry_widgets.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,9 +55,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _udpService.startListening();
     _udpService.telemetryStream.listen((data) {
-      setState(() {
-        _telemetryData = data;
-      });
+      if (mounted) {
+        setState(() {
+          _telemetryData = data;
+        });
+      }
       _loggerService.logData(data);
     });
 
@@ -67,29 +70,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await _gamepadService.init();
 
     _gamepadService.onControlUpdated = (roll, pitch, yaw, throttle) {
-      setState(() {
-        currentRoll = roll;
-        currentPitch = pitch;
-        currentYaw = yaw;
-        currentThrottle = throttle; // Hiển thị 0-100% trên giao diện
-      });
+      if (mounted) {
+        setState(() {
+          currentRoll = roll;
+          currentPitch = pitch;
+          currentYaw = yaw;
+          currentThrottle = throttle; // Hiển thị 0-100% trên giao diện
+        });
+      }
 
-      // QUAN TRỌNG: Quy đổi ga từ phần trăm (0-100) sang PWM (1000-2000)
+      // Quy đổi ga từ phần trăm (0-100) sang PWM (1000-2000)
       double realThrottle = 1000.0 + (throttle * 10.0); 
-      
-      // Gửi đủ 5 tham số: Ga, Roll, Pitch, Yaw, và trạng thái ARM
       String command = "#${realThrottle.toStringAsFixed(1)},${roll.toStringAsFixed(1)},${pitch.toStringAsFixed(1)},${yaw.toStringAsFixed(1)},$_isArmed*";
       _udpService.sendCommand(command);
     };
 
     _gamepadService.onArmPressed = () {
-      setState(() { _isArmed = 1; });
+      if (mounted) setState(() { _isArmed = 1; });
       double realThrottle = 1000.0 + (currentThrottle * 10.0);
       _udpService.sendCommand("#${realThrottle.toStringAsFixed(1)},0.0,0.0,0.0,1*");
     };
 
     _gamepadService.onDisarmPressed = () {
-      setState(() { _isArmed = 0; });
+      if (mounted) setState(() { _isArmed = 0; });
       _udpService.sendCommand("#1000.0,0.0,0.0,0.0,0*");
     };
 
@@ -121,27 +124,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ================= CỘT 1 =================
+            // ================= CỘT 1: CHỈ ĐỂ BIỂU ĐỒ & LA BÀN =================
             Expanded(
-              flex: 3,
+              flex: 4, // Cho cột 1 chiếm nhiều diện tích nhất để vẽ đồ thị đẹp hơn
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildSectionHeader("CẢM BIẾN & NGUỒN", Icons.sensors),
+                  _buildSectionHeader("BIỂU ĐỒ TRẠNG THÁI", Icons.show_chart),
+                  
                   Expanded(
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      childAspectRatio: 2.5,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
+                    child: Column( 
                       children: [
-                        _buildCompactCard("Roll", _telemetryData["Roll"]?.toStringAsFixed(2) ?? "0.0", "°", Colors.indigo),
-                        _buildCompactCard("Pitch", _telemetryData["Pitch"]?.toStringAsFixed(2) ?? "0.0", "°", Colors.deepPurple),
-                        _buildCompactCard("Yaw", _telemetryData["Yaw"]?.toStringAsFixed(2) ?? "0.0", "°", Colors.pink),
-                        _buildCompactCard("Độ cao", _telemetryData["Do_cao"]?.toStringAsFixed(2) ?? "0.0", "m", Colors.blue),
-                        _buildCompactCard("Điện áp", _telemetryData["Dien_ap"]?.toStringAsFixed(2) ?? "0.0", "V", Colors.green),
-                        _buildCompactCard("Dòng điện", _telemetryData["Dong_dien"]?.toStringAsFixed(2) ?? "0.0", "A", Colors.red),
-                        _buildCompactCard("Áp suất", _telemetryData["Ap_xuat"]?.toStringAsFixed(0) ?? "0", "Pa", Colors.grey),
-                        _buildCompactCard("Nhiệt độ", _telemetryData["Nhiet_do"]?.toStringAsFixed(1) ?? "0.0", "°C", Colors.orange),
+                        Expanded(
+                          flex: 2,
+                          child: RealtimeLineChart(
+                            title: "Biểu đồ ROLL (°)",
+                            actualValue: _telemetryData["Roll"] ?? 0.0,
+                            targetValue: currentRoll, // ĐÃ SỬA: Lấy trực tiếp từ lệnh tay cầm
+                            actualColor: Colors.indigoAccent,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        
+                        Expanded(
+                          flex: 2,
+                          child: RealtimeLineChart(
+                            title: "Biểu đồ PITCH (°)",
+                            actualValue: _telemetryData["Pitch"] ?? 0.0,
+                            targetValue: currentPitch, // ĐÃ SỬA: Lấy trực tiếp từ lệnh tay cầm
+                            actualColor: Colors.deepPurpleAccent,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        
+                        Expanded(
+                          flex: 3, 
+                          child: Container(
+                             padding: const EdgeInsets.all(12),
+                             decoration: BoxDecoration(
+                               color: Colors.blueGrey.shade800,
+                               borderRadius: BorderRadius.circular(8),
+                             ),
+                             child: CompassWidget(
+                               yaw: _telemetryData["Yaw"] ?? 0.0,
+                               targetYaw: currentYaw, // ĐÃ SỬA: Lấy trực tiếp từ lệnh tay cầm
+                             ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -151,26 +180,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
             
             const SizedBox(width: 12),
 
-            // ================= CỘT 2 =================
+            // ================= CỘT 2: TẤT CẢ THÔNG SỐ (CÓ THỂ CUỘN) =================
             Expanded(
               flex: 3,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildSectionHeader("ĐỊNH VỊ VỆ TINH", Icons.satellite_alt),
+                  _buildSectionHeader("THÔNG SỐ HỆ THỐNG", Icons.memory),
+                  
                   Expanded(
+                    // Lưới hiển thị các hộp nhỏ, TỰ ĐỘNG CUỘN khi quá dài
                     child: GridView.count(
                       crossAxisCount: 2,
-                      childAspectRatio: 2.5,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
+                      childAspectRatio: 2.5, // Tỉ lệ hộp (rộng/cao), càng lớn hộp càng lùn
+                      mainAxisSpacing: 6,
+                      crossAxisSpacing: 6,
                       children: [
+                        // Cảm biến IMU & Nguồn
+                        _buildCompactCard("Roll", _telemetryData["Roll"]?.toStringAsFixed(2) ?? "0.0", "°", Colors.indigo),
+                        _buildCompactCard("Pitch", _telemetryData["Pitch"]?.toStringAsFixed(2) ?? "0.0", "°", Colors.deepPurple),
+                        _buildCompactCard("Yaw", _telemetryData["Yaw"]?.toStringAsFixed(2) ?? "0.0", "°", Colors.pink),
+                        _buildCompactCard("Độ cao (Khí áp)", _telemetryData["Do_cao"]?.toStringAsFixed(2) ?? "0.0", "m", Colors.blue),
+                        _buildCompactCard("Điện áp (Mức cạn ~ 11.1V)", _telemetryData["Dien_ap"]?.toStringAsFixed(2) ?? "0.0", "V", Colors.green),
+                        _buildCompactCard("Dòng điện", _telemetryData["Dong_dien"]?.toStringAsFixed(2) ?? "0.0", "A", Colors.red),
+                        
+                        // GPS Neo-8M
                         _buildCompactCard("Vĩ độ (Lat)", _telemetryData["gps_lat"]?.toStringAsFixed(6) ?? "0.0", "", Colors.teal),
                         _buildCompactCard("Kinh độ (Lng)", _telemetryData["gps_lng"]?.toStringAsFixed(6) ?? "0.0", "", Colors.teal),
-                        _buildCompactCard("Vệ tinh", _telemetryData["gps_sat"]?.toString() ?? "0", "", Colors.amber),
-                        _buildCompactCard("Độ chính xác", _telemetryData["gps_hdop"]?.toStringAsFixed(1) ?? "0.0", "", Colors.purple),
-                        _buildCompactCard("Vận tốc", _telemetryData["gps_speed"]?.toStringAsFixed(2) ?? "0.0", "m/s", Colors.cyan),
+                        _buildCompactCard("Vệ tinh", _telemetryData["gps_sat"]?.toString() ?? "0", "sat", Colors.amber),
+                        _buildCompactCard("Độ chính xác (HDOP)", _telemetryData["gps_hdop"]?.toStringAsFixed(1) ?? "0.0", "", Colors.purple),
+                        _buildCompactCard("Vận tốc GPS", _telemetryData["gps_speed"]?.toStringAsFixed(2) ?? "0.0", "m/s", Colors.cyan),
                         _buildCompactCard("Độ cao GPS", _telemetryData["gps_alt"]?.toStringAsFixed(2) ?? "0.0", "m", Colors.brown),
-                        _buildCompactCard("Hướng đi", _telemetryData["gps_course"]?.toStringAsFixed(1) ?? "0.0", "°", Colors.lime),
+                        _buildCompactCard("Hướng di chuyển", _telemetryData["gps_course"]?.toStringAsFixed(1) ?? "0.0", "°", Colors.lime),
                       ],
                     ),
                   ),
@@ -180,9 +221,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             const SizedBox(width: 12),
 
-            // ================= CỘT 3 =================
+            // ================= CỘT 3: ĐIỀU KHIỂN & LỆNH =================
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -194,6 +235,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           GamepadVisualizer(stateNotifier: _gamepadStateNotifier),
+                          const SizedBox(height: 8),
                           _buildGamepadLegend(),
                           const SizedBox(height: 12),
                           _buildCommandedValuesPanel(),
@@ -207,7 +249,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: Column(
                                 children: [
                                   Icon(_isRecording ? Icons.fiber_manual_record : Icons.save_alt, 
-                                       color: _isRecording ? Colors.redAccent : Colors.white, size: 28),
+                                       color: _isRecording ? Colors.redAccent : Colors.white, size: 24),
                                   const SizedBox(height: 8),
                                   ElevatedButton(
                                     style: ElevatedButton.styleFrom(
@@ -217,10 +259,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     onPressed: () async {
                                       if (_isRecording) {
                                         await _loggerService.stopLogging();
-                                        setState(() { _isRecording = false; });
+                                        if (mounted) setState(() { _isRecording = false; });
                                       } else {
                                         bool started = await _loggerService.startLogging();
-                                        if (started) { setState(() { _isRecording = true; }); }
+                                        if (started && mounted) { setState(() { _isRecording = true; }); }
                                       }
                                     },
                                     child: Text(_isRecording ? "DỪNG GHI LOG" : "GHI NHẬT KÝ BAY", style: const TextStyle(fontSize: 12)),
@@ -229,45 +271,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
 
                           ElevatedButton.icon(
                             onPressed: () {
-                              setState(() { _isArmed = 1; });
+                              if (mounted) setState(() { _isArmed = 1; });
                               double realThrottle = 1000.0 + (currentThrottle * 10.0);
                               _udpService.sendCommand("#${realThrottle.toStringAsFixed(1)},0.0,0.0,0.0,1*");
                             },
                             icon: const Icon(Icons.flight_takeoff),
-                            label: const Text("ARM", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            label: const Text("ARM", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.redAccent,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                           ElevatedButton.icon(
                             onPressed: () {
-                              setState(() { _isArmed = 0; });
+                              if (mounted) setState(() { _isArmed = 0; });
                               _udpService.sendCommand("#1000.0,0.0,0.0,0.0,0*");
                             },
                             icon: const Icon(Icons.flight_land),
-                            label: const Text("DISARM", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            label: const Text("DISARM", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.orange,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                           ElevatedButton.icon(
                             onPressed: () => _showPidTuningDialog(context),
                             icon: const Icon(Icons.tune),
-                            label: const Text("TÙY CHỈNH PID", style: TextStyle(fontSize: 14)),
+                            label: const Text("TÙY CHỈNH PID", style: TextStyle(fontSize: 13)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.teal,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                           ),
                         ],
@@ -288,9 +330,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white70),
+          Icon(icon, color: Colors.white70, size: 20),
           const SizedBox(width: 8),
-          Text(title, style: const TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(title, style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -300,25 +342,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Card(
       color: Colors.blueGrey.shade800,
       elevation: 2,
+      margin: EdgeInsets.zero, 
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: accentColor.withOpacity(0.5), width: 2),
-        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: accentColor.withOpacity(0.5), width: 1.2), 
+        borderRadius: BorderRadius.circular(6), 
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        padding: const EdgeInsets.all(6.0), 
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: TextStyle(fontSize: 12, color: Colors.blueGrey.shade200)),
+            FittedBox(
+              fit: BoxFit.scaleDown, 
+              child: Text(title, style: TextStyle(fontSize: 11, color: Colors.blueGrey.shade200)) 
+            ),
             const Spacer(),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                const SizedBox(width: 4),
-                Text(unit, style: TextStyle(fontSize: 14, color: accentColor)),
-              ],
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)), 
+                  const SizedBox(width: 3),
+                  Text(unit, style: TextStyle(fontSize: 12, color: accentColor)),
+                ],
+              ),
             )
           ],
         ),
@@ -328,15 +377,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildGamepadLegend() {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.black26,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         children: [
-          const Text("GÁN NÚT CHỨC NĂNG", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 1)),
-          const SizedBox(height: 8),
+          const Text("GÁN NÚT CHỨC NĂNG", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 1)),
+          const SizedBox(height: 6),
           _buildLegendRow("🕹️ L-Stick", "Roll / Pitch"),
           _buildLegendRow("🕹️ R-Stick", "Yaw"),
           _buildLegendRow("🎯 LT / RT", "Giảm / Tăng Ga"),
@@ -353,8 +402,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(key, style: const TextStyle(fontSize: 11, color: Colors.cyan)),
-          Text(func, style: const TextStyle(fontSize: 11, color: Colors.white)),
+          Text(key, style: const TextStyle(fontSize: 10, color: Colors.cyan)),
+          Text(func, style: const TextStyle(fontSize: 10, color: Colors.white)),
         ],
       ),
     );
@@ -362,7 +411,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildCommandedValuesPanel() {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.blueGrey.shade800,
         borderRadius: BorderRadius.circular(8),
@@ -370,8 +419,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       child: Column(
         children: [
-          const Text("TÍN HIỆU ĐANG GỬI (COMMAND)", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.cyan, letterSpacing: 1)),
-          const SizedBox(height: 10),
+          const Text("TÍN HIỆU ĐANG GỬI (COMMAND)", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.cyan, letterSpacing: 1)),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -390,19 +439,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Column(
       children: [
         Text(label, style: const TextStyle(fontSize: 10, color: Colors.white70)),
-        const SizedBox(height: 4),
-        Text("${val.toStringAsFixed(1)}$unit", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+        const SizedBox(height: 2),
+        Text("${val.toStringAsFixed(1)}$unit", style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
       ],
     );
   }
 
   void _showPidTuningDialog(BuildContext context) {
     final TextEditingController kpRollController = TextEditingController(text: _telemetryData["Kp_roll_moi"]?.toString() ?? "0.0");
-    final TextEditingController kiRollController = TextEditingController(text: _telemetryData["Ki_roll_moi"]?.toString() ?? "0.0");
     final TextEditingController kdRollController = TextEditingController(text: _telemetryData["Kd_roll_moi"]?.toString() ?? "0.0");
 
     final TextEditingController kpPitchController = TextEditingController(text: _telemetryData["Kp_pitch_moi"]?.toString() ?? "0.0");
-    final TextEditingController kiPitchController = TextEditingController(text: _telemetryData["Ki_pitch_moi"]?.toString() ?? "0.0");
     final TextEditingController kdPitchController = TextEditingController(text: _telemetryData["Kd_pitch_moi"]?.toString() ?? "0.0");
 
     final TextEditingController kpYawController = TextEditingController(text: _telemetryData["Kp_yaw_moi"]?.toString() ?? "0.0");
@@ -418,11 +465,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildPidInputField("Kp Roll", kpRollController),
-                _buildPidInputField("Ki Roll", kiRollController),
                 _buildPidInputField("Kd Roll", kdRollController),
                 const SizedBox(height: 16),
                 _buildPidInputField("Kp Pitch", kpPitchController),
-                _buildPidInputField("Ki Pitch", kiPitchController),
                 _buildPidInputField("Kd Pitch", kdPitchController),
                 const SizedBox(height: 16),
                 _buildPidInputField("Kp Yaw", kpYawController),
@@ -435,7 +480,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ElevatedButton(
               child: const Text("Lưu"),
               onPressed: () {
-                String command = "@${kpRollController.text},${kiRollController.text},${kdRollController.text},${kpPitchController.text},${kiPitchController.text},${kdPitchController.text},${kpYawController.text},${kiYawController.text},0.0*"; 
+                String command = "@${kpRollController.text},${kdRollController.text},${kpPitchController.text},${kdPitchController.text},${kpYawController.text},${kiYawController.text},0.0*"; 
                 _udpService.sendCommand(command);
                 Navigator.of(context).pop();
               },
@@ -469,7 +514,7 @@ class GamepadVisualizer extends StatelessWidget {
           color: Colors.transparent, 
           borderRadius: BorderRadius.circular(16),
         ),
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(4.0),
         child: ValueListenableBuilder<Map<String, double>>(
           valueListenable: stateNotifier,
           builder: (context, states, child) {
@@ -500,12 +545,13 @@ class GamepadVisualizer extends StatelessWidget {
 
                 return Stack(
                   children: [
-                    _placeAt(w, h, 0.22, 0.15, _buildTriggerBox("LT", lt)),
-                    _placeAt(w, h, 0.78, 0.15, _buildTriggerBox("RT", rt)),
-                    _placeAt(w, h, 0.22, 0.30, _buildBumperBox("LB", lb > 0.5)),
-                    _placeAt(w, h, 0.78, 0.30, _buildBumperBox("RB", rb > 0.5)),
+                    // Cập nhật: Truyền theo kích thước tham chiếu (ví dụ: w * 0.08 cho chiều rộng trigger)
+                    _placeAt(w, h, 0.22, 0.15, _buildTriggerBox("LT", lt, w * 0.1)),
+                    _placeAt(w, h, 0.78, 0.15, _buildTriggerBox("RT", rt, w * 0.1)),
+                    _placeAt(w, h, 0.22, 0.30, _buildBumperBox("LB", lb > 0.5, w * 0.15)),
+                    _placeAt(w, h, 0.78, 0.30, _buildBumperBox("RB", rb > 0.5, w * 0.15)),
                     _placeAt(w, h, 0.22, 0.55, _buildStick(w * 0.16, stickLeftX, stickLeftY)),
-                    _placeAt(w, h, 0.78, 0.55, _buildActionButtons(w * 0.18, btnA, btnB, btnX, btnY)),
+                    _placeAt(w, h, 0.78, 0.55, _buildActionButtons(w * 0.2, btnA, btnB, btnX, btnY)),
                     _placeAt(w, h, 0.38, 0.80, _buildDPad(w * 0.14, dpadUp, dpadDown, dpadLeft, dpadRight)),
                     _placeAt(w, h, 0.62, 0.80, _buildStick(w * 0.16, stickRightX, stickRightY)),
                   ],
@@ -533,11 +579,12 @@ class GamepadVisualizer extends StatelessWidget {
     return states[key] ?? 0.0;
   }
 
-  Widget _buildTriggerBox(String label, double intensity) {
+  Widget _buildTriggerBox(String label, double intensity, double baseW) {
     intensity = intensity.clamp(0.0, 1.0);
+    double baseH = baseW * 0.6; // Chiều cao cơ bản
     return Container(
-      width: 32,
-      height: 18 + (intensity * 10), 
+      width: baseW,
+      height: baseH + (intensity * baseW * 0.4), // Độ phản hồi tỷ lệ thuận với chiều rộng
       decoration: BoxDecoration(
         color: intensity > 0.1 ? Colors.cyan.withOpacity(intensity) : Colors.transparent,
         border: Border.all(color: Colors.white70, width: 2),
@@ -545,14 +592,14 @@ class GamepadVisualizer extends StatelessWidget {
         boxShadow: intensity > 0.1 ? [BoxShadow(color: Colors.cyan, blurRadius: 10 * intensity)] : [],
       ),
       alignment: Alignment.center,
-      child: Text(label, style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+      child: Text(label, style: TextStyle(fontSize: baseW * 0.3, color: Colors.white, fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildBumperBox(String label, bool isPressed) {
+  Widget _buildBumperBox(String label, bool isPressed, double width) {
     return Container(
-      width: 40,
-      height: 14,
+      width: width,
+      height: width * 0.35, 
       decoration: BoxDecoration(
         color: isPressed ? Colors.cyan : Colors.transparent,
         border: Border.all(color: Colors.white70, width: 2),
@@ -561,8 +608,6 @@ class GamepadVisualizer extends StatelessWidget {
       ),
     );
   }
-
- 
 
   Widget _buildStick(double size, double x, double y) {
     double maxOffset = size * 0.3; 
@@ -613,25 +658,25 @@ class GamepadVisualizer extends StatelessWidget {
   }
 
   Widget _buildActionButtons(double size, bool a, bool b, bool x, bool y) {
-    double btnSize = size * 0.3;
+    double btnSize = size * 0.4;
     return SizedBox(
       width: size,
       height: size,
       child: Stack(
         children: [
-          Positioned(top: 0, left: (size - btnSize) / 2, child: _buildCircleBtn("Y", y, Colors.amber)),
-          Positioned(bottom: 0, left: (size - btnSize) / 2, child: _buildCircleBtn("A", a, Colors.green)),
-          Positioned(top: (size - btnSize) / 2, left: 0, child: _buildCircleBtn("X", x, Colors.blue)),
-          Positioned(top: (size - btnSize) / 2, right: 0, child: _buildCircleBtn("B", b, Colors.red)),
+          Positioned(top: 0, left: (size - btnSize) / 2, child: _buildCircleBtn("Y", y, Colors.amber, btnSize)),
+          Positioned(bottom: 0, left: (size - btnSize) / 2, child: _buildCircleBtn("A", a, Colors.green, btnSize)),
+          Positioned(top: (size - btnSize) / 2, left: 0, child: _buildCircleBtn("X", x, Colors.blue, btnSize)),
+          Positioned(top: (size - btnSize) / 2, right: 0, child: _buildCircleBtn("B", b, Colors.red, btnSize)),
         ],
       ),
     );
   }
 
-  Widget _buildCircleBtn(String label, bool isPressed, Color activeColor) {
+  Widget _buildCircleBtn(String label, bool isPressed, Color activeColor, double btnSize) {
     return Container(
-      width: 18,
-      height: 18,
+      width: btnSize,
+      height: btnSize,
       decoration: BoxDecoration(
         color: isPressed ? activeColor : Colors.transparent,
         shape: BoxShape.circle,
@@ -639,7 +684,7 @@ class GamepadVisualizer extends StatelessWidget {
         boxShadow: isPressed ? [BoxShadow(color: activeColor, blurRadius: 10)] : [],
       ),
       alignment: Alignment.center,
-      child: Text(label, style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold)),
+      child: Text(label, style: TextStyle(fontSize: btnSize * 0.5, color: Colors.white, fontWeight: FontWeight.bold)),
     );
   }
 }

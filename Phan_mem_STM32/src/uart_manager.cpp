@@ -11,40 +11,38 @@ void initUART() {
 
 void handleCommunication() {
     static uint32_t lastRecvTime = 0;
+    static uint32_t lastByteTime = 0; // Thêm biến đếm thời gian timeout byte
     static uint8_t buffer[sizeof(Lenh_Dieu_Khien)];
     static uint8_t bufIndex = 0;
-    
-    // Khai báo 3 trạng thái chờ dữ liệu
     static enum { WAIT_AA, WAIT_BB, RECEIVING } state = WAIT_AA;
 
-    // 1. MÁY TRẠNG THÁI ĐỌC UART CHỐNG TRƯỢT KHUNG
+    // Reset bộ đệm nếu quá 10ms không nhận được byte nào (chống kẹt khung)
+    if (millis() - lastByteTime > 10 && state == RECEIVING) {
+        state = WAIT_AA; 
+    }
+
     while (Serial1.available()) {
         uint8_t c = Serial1.read();
+        lastByteTime = millis();
 
         switch (state) {
             case WAIT_AA:
-                if (c == 0xAA) state = WAIT_BB; // Thấy đầu kéo, chờ toa số 1
+                if (c == 0xAA) state = WAIT_BB;
                 break;
-                
             case WAIT_BB:
                 if (c == 0xBB) {
-                    state = RECEIVING; // Thấy toa số 1, bắt đầu nhận hàng
+                    state = RECEIVING;
                     bufIndex = 0;
-                } else if (c == 0xAA) {
-                    state = WAIT_BB; // Xử lý lỗi trùng lặp byte
-                } else {
-                    state = WAIT_AA; // Lỗi, quay về chờ đầu kéo
+                } else if (c != 0xAA) {
+                    state = WAIT_AA;
                 }
                 break;
-                
             case RECEIVING:
-                buffer[bufIndex++] = c; // Đút dữ liệu vào mảng
-                
-                // Khi đã nhận đủ số byte của Struct
+                buffer[bufIndex++] = c;
                 if (bufIndex >= sizeof(Lenh_Dieu_Khien)) {
-                    memcpy(&Lenh_tu_ESP, buffer, sizeof(Lenh_Dieu_Khien)); // Chép sang biến chính
-                    lastRecvTime = millis(); // Đánh dấu thời gian sống!
-                    state = WAIT_AA; // Reset để chờ gói tiếp theo
+                    memcpy(&Lenh_tu_ESP, buffer, sizeof(Lenh_Dieu_Khien));
+                    lastRecvTime = millis();
+                    state = WAIT_AA;
                 }
                 break;
         }

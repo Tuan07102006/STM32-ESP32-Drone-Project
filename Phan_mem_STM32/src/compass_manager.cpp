@@ -71,10 +71,10 @@ void calibrateCompass() {
   int16_t y_min = 32767, y_max = -32768;
   int16_t z_min = 32767, z_max = -32768;
   
-  Serial.println(">>> BAT DAU CALIB: XOAY DRONE TRONG 20 GIAY...");
+  Serial.println(">>> BAT DAU CALIB: XOAY DRONE TRONG 30 GIAY...");
   uint32_t start_time = millis();
   
-  while (millis() - start_time < 20000) { 
+  while (millis() - start_time < 30000) { 
     Wire.beginTransmission(QMC5883P_ADDR);
     Wire.write(QMC5883P_REG_DATA);
     
@@ -142,7 +142,7 @@ void readCompass() {
 
       float x_cal = ((float)raw_x - lech_x) * ty_le_x;
       float y_cal = ((float)raw_y - lech_y) * ty_le_y;
-      float z_cal = -((float)raw_z - lech_z) * ty_le_z;
+      float z_cal = ((float)raw_z - lech_z) * ty_le_z;
 
       float roll_rad = goc_roll_thuc_te * PI / 180.0f;
       float pitch_rad = goc_pitch_thuc_te * PI / 180.0f;
@@ -152,11 +152,18 @@ void readCompass() {
       float x_horizontal = x_cal * cos_pitch + z_cal * sin_pitch;
       float y_horizontal = x_cal * sin_roll * sin_pitch + y_cal * cos_roll - z_cal * sin_roll * cos_pitch;
 
-      float heading = atan2(y_horizontal, x_horizontal) * 180.0f / PI;
+      float heading = atan2(-y_horizontal, x_horizontal) * 180.0f / PI; 
+      
+    
+      float offset_lap_dat = -90.0f; 
+      heading += offset_lap_dat;
+      
+    
       heading += goc_tu_thien;
 
-      if (heading < 0.0f) heading += 360.0f;
-      if (heading >= 360.0f) heading -= 360.0f;
+      // 3. CHUẨN HÓA LẠI GÓC VỀ 0-360
+      while (heading < 0.0f) heading += 360.0f;
+      while (heading >= 360.0f) heading -= 360.0f;
 
       static float heading_filtered = 0.0f;
       static bool heading_initialized = false;
@@ -180,7 +187,7 @@ void readCompass() {
 void calibrateAndSave() {
     buzzer_bat_dau_calib();
 
-    // 1. Quét I2C trong 20 giây (đã fix tốc độ và chống treo)
+    // 1. Quét I2C trong 30 giây (đã fix tốc độ và chống treo)
     calibrateCompass();  
     
     // 2. Còi kết thúc

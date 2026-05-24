@@ -53,6 +53,7 @@ struct Bo_dieu_khien_PID {
   float Dau_ra;
 };
 
+
 //  BIẾN TOÀN CỤC 
 extern Goi_du_lieu Du_lieu_gui_toi_ESP;
 extern Lenh_Dieu_Khien Lenh_tu_ESP;

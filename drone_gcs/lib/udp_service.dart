@@ -31,8 +31,7 @@ class UDPService {
       String data = message.substring(1, message.length - 1);
       List<String> values = data.split(",");
 
-      // SỬA 1: Đổi 29 thành 28
-      if (values.length >= 28) { 
+      if (values.length >= 25) { 
         try {
           _telemetryController.add({
             'Roll': double.tryParse(values[0]) ?? 0.0,
@@ -55,14 +54,14 @@ class UDPService {
             'Diem_dat_Pitch': double.tryParse(values[17]) ?? 0.0,
             'Diem_dat_Yaw': double.tryParse(values[18]) ?? 0.0,
             'Kp_roll_moi': double.tryParse(values[19]) ?? 0.0,
-            'Ki_roll_moi': double.tryParse(values[20]) ?? 0.0,
-            'Kd_roll_moi': double.tryParse(values[21]) ?? 0.0,
-            'Kp_pitch_moi': double.tryParse(values[22]) ?? 0.0,
-            'Ki_pitch_moi': double.tryParse(values[23]) ?? 0.0,
-            'Kd_pitch_moi': double.tryParse(values[24]) ?? 0.0,
-            'Kp_yaw_moi': double.tryParse(values[25]) ?? 0.0,
-            'Ki_yaw_moi': double.tryParse(values[26]) ?? 0.0,
-            'Trang_thai_Arm': int.tryParse(values[27]) ?? 0,
+            //  'Ki_roll_moi': double.tryParse(values[20]) ?? 0.0,
+            'Kd_roll_moi': double.tryParse(values[20]) ?? 0.0,
+            'Kp_pitch_moi': double.tryParse(values[21]) ?? 0.0,
+            //'Ki_pitch_moi': double.tryParse(values[23]) ?? 0.0,
+            'Kd_pitch_moi': double.tryParse(values[22]) ?? 0.0,
+            'Kp_yaw_moi': double.tryParse(values[23]) ?? 0.0,
+            'Ki_yaw_moi': double.tryParse(values[24]) ?? 0.0,
+            'Trang_thai_Arm': int.tryParse(values[25]) ?? 0,
           });
         } catch (e) {
           debugPrint('Error parsing telemetry data: $e'); 

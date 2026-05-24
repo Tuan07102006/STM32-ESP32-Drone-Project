@@ -14,8 +14,6 @@ class GamepadService {
   // Biến lưu trạng thái của vòng lặp ngay trước đó
   double _lastRoll = 0.0;
   double _lastPitch = 0.0;
-  double _lastYaw = 0.0;
-  double _lastThrottle = 0.0;
 
   Map<String, double> keyStates = {};
 
@@ -63,15 +61,42 @@ class GamepadService {
     if (stickRightX.abs() < 0.1) stickRightX = 0;
     if (stickRightY.abs() < 0.1) stickRightY = 0;
 
-    // --- 2. XỬ LÝ PITCH & ROLL (TỰ ĐỘNG TRẢ VỀ CÂN BẰNG) ---
-    roll = stickLeftX * 100;
-    pitch = stickLeftY * -100; 
+    // --- 2. XỬ LÝ PITCH & ROLL VỚI SLEW RATE LIMITER ---
+    // Tính toán góc đích (Target) mà tay cầm muốn hướng tới
+    double targetRoll = stickLeftX * 50.0;
+    double targetPitch = stickLeftY * -50.0; 
+
+    // Giới hạn tốc độ gạt: Tối đa thay đổi 5 đơn vị mỗi 50ms.
+    const double maxStep = 5.0;
+
+    // Áp dụng giới hạn cho Roll
+    if (targetRoll > _lastRoll + maxStep) {
+      roll = _lastRoll + maxStep;
+    } else if (targetRoll < _lastRoll - maxStep) {
+      roll = _lastRoll - maxStep;
+    } else {
+      roll = targetRoll; // Nếu thay đổi nhỏ hơn maxStep, cập nhật bình thường
+    }
+
+    // Áp dụng giới hạn cho Pitch
+    if (targetPitch > _lastPitch + maxStep) {
+      pitch = _lastPitch + maxStep;
+    } else if (targetPitch < _lastPitch - maxStep) {
+      pitch = _lastPitch - maxStep;
+    } else {
+      pitch = targetPitch;
+    }
 
     // --- 3. XỬ LÝ YAW (HƯỚNG ĐẦU DRONE - CỘNG DỒN) ---
-    if (stickRightX != 0) {
-      yaw += stickRightX * 2.0; 
-      if (yaw > 180.0) yaw = 180.0;
-      if (yaw < -180.0) yaw = -180.0;
+   if (stickRightX != 0) {
+      yaw += stickRightX * 3.0; 
+      
+      // Sửa lỗi: Quấn vòng giá trị để có thể quay 360 độ liên tục
+      if (yaw > 180.0) {
+        yaw -= 360.0;
+      } else if (yaw <= -180.0) {
+        yaw += 360.0;
+      }
     }
 
     // --- 4. XỬ LÝ MỨC GA (THROTTLE - CỘNG DỒN) ---
@@ -85,15 +110,14 @@ class GamepadService {
     }
 
     // --- 5. LỆNH GỬI LIÊN TỤC (TRÁNH FAILSAFE) ---
-    // Đã xóa lệnh `if` kiểm tra sự thay đổi để đảm bảo luôn gửi dữ liệu
     if (onControlUpdated != null) {
       onControlUpdated!(roll, pitch, yaw, throttle);
     }
     
+    // --- LƯU LẠI GIÁ TRỊ VÀO BIẾN CHƯA DÙNG ĐỂ CHUẨN BỊ CHO VÒNG LẶP SAU ---
+  
     _lastRoll = roll;
     _lastPitch = pitch;
-    _lastYaw = yaw;
-    _lastThrottle = throttle;
 
     // --- 6. XỬ LÝ NÚT BẤM (ARM / DISARM) ---
     bool isArmPressed = state.buttonA; 
