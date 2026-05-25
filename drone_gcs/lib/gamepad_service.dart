@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart'; // THÊM: Thư viện lắng nghe bàn phím
 import 'package:win32_gamepad/win32_gamepad.dart';
 
 class GamepadService {
@@ -11,7 +12,6 @@ class GamepadService {
   double yaw = 0.0;
   double throttle = 0.0;
 
-  // Biến lưu trạng thái của vòng lặp ngay trước đó
   double _lastRoll = 0.0;
   double _lastPitch = 0.0;
 
@@ -29,56 +29,85 @@ class GamepadService {
     try {
       _gamepad = Gamepad(0);
       if (_gamepad!.isConnected) {
-        debugPrint(" Đã kết nối tay cầm XInput (Win32)");
+        debugPrint("🎮 Đã kết nối tay cầm XInput (Win32)");
       } else {
-        debugPrint(" Chưa tìm thấy tay cầm. Hãy cắm tay cầm vào và thử lại.");
+        debugPrint("⚠️ Chưa tìm thấy tay cầm. Tự động chuyển sang dùng Bàn phím!");
       }
-      _pollingTimer = Timer.periodic(const Duration(milliseconds: 50), _pollGamepad);
+      
+      // Đổi tên hàm thành _pollInputs để phản ánh việc đọc cả 2 thiết bị
+      _pollingTimer = Timer.periodic(const Duration(milliseconds: 50), _pollInputs);
     } catch (e) {
       debugPrint("❌ Lỗi khởi tạo Gamepad: $e");
+      // Vẫn chạy vòng lặp để bàn phím có thể hoạt động dù tay cầm bị lỗi
+      _pollingTimer = Timer.periodic(const Duration(milliseconds: 50), _pollInputs);
     }
   }
 
-  void _pollGamepad(Timer timer) {
-    if (_gamepad == null) return;
+  void _pollInputs(Timer timer) {
+    // --- 1. ĐỌC TÍN HIỆU GAMEPAD (Nếu có kết nối) ---
+    double stickLeftX = 0.0, stickLeftY = 0.0;
+    double stickRightX = 0.0, stickRightY = 0.0;
+    double ltValue = 0.0, rtValue = 0.0;
+    bool isArmBtn = false, isDisarmBtn = false;
 
-    _gamepad!.updateState();
-    if (!_gamepad!.isConnected) return;
+    if (_gamepad != null) {
+      _gamepad!.updateState();
+      if (_gamepad!.isConnected) {
+        final state = _gamepad!.state;
+        stickLeftX = state.leftThumbstickX / 32767.0;
+        stickLeftY = state.leftThumbstickY / 32767.0; 
+        stickRightX = state.rightThumbstickX / 32767.0;
+        stickRightY = state.rightThumbstickY / 32767.0;
 
-    final state = _gamepad!.state;
+        ltValue = state.leftTrigger / 255.0;
+        rtValue = state.rightTrigger / 255.0;
 
-    // --- 1. CHUẨN HÓA TRỤC (Analog & Triggers) & LỌC NHIỄU ---
-    double stickLeftX = state.leftThumbstickX / 32767.0;
-    double stickLeftY = state.leftThumbstickY / 32767.0; 
-    double stickRightX = state.rightThumbstickX / 32767.0;
-    double stickRightY = state.rightThumbstickY / 32767.0;
+        // Lọc nhiễu (Deadzone)
+        if (stickLeftX.abs() < 0.1) stickLeftX = 0;
+        if (stickLeftY.abs() < 0.1) stickLeftY = 0;
+        if (stickRightX.abs() < 0.1) stickRightX = 0;
+        if (stickRightY.abs() < 0.1) stickRightY = 0;
 
-    double ltValue = state.leftTrigger / 255.0;
-    double rtValue = state.rightTrigger / 255.0;
+        isArmBtn = state.buttonA;
+        isDisarmBtn = state.buttonB;
+      }
+    }
 
-    if (stickLeftX.abs() < 0.1) stickLeftX = 0;
-    if (stickLeftY.abs() < 0.1) stickLeftY = 0;
-    if (stickRightX.abs() < 0.1) stickRightX = 0;
-    if (stickRightY.abs() < 0.1) stickRightY = 0;
+    // --- 2. ĐỌC TÍN HIỆU BÀN PHÍM (Tích hợp song song) ---
+    final keys = HardwareKeyboard.instance.logicalKeysPressed;
 
-    // --- 2. XỬ LÝ PITCH & ROLL VỚI SLEW RATE LIMITER ---
-    // Tính toán góc đích (Target) mà tay cầm muốn hướng tới
+    // Pitch & Roll (Phím W, A, S, D)
+    if (keys.contains(LogicalKeyboardKey.keyW)) stickLeftY = 1.0;  // Tiến (Pitch xuống)
+    if (keys.contains(LogicalKeyboardKey.keyS)) stickLeftY = -1.0; // Lùi (Pitch lên)
+    if (keys.contains(LogicalKeyboardKey.keyA)) stickLeftX = -1.0; // Trái (Roll trái)
+    if (keys.contains(LogicalKeyboardKey.keyD)) stickLeftX = 1.0;  // Phải (Roll phải)
+
+    // Yaw (Mũi tên Trái / Phải)
+    if (keys.contains(LogicalKeyboardKey.arrowLeft)) stickRightX = -1.0;
+    if (keys.contains(LogicalKeyboardKey.arrowRight)) stickRightX = 1.0;
+
+    // Throttle / Ga (Mũi tên Lên / Xuống thay cho Cò RT/LT)
+    if (keys.contains(LogicalKeyboardKey.arrowUp)) rtValue = 1.0;   // Tăng ga
+    if (keys.contains(LogicalKeyboardKey.arrowDown)) ltValue = 1.0; // Giảm ga
+
+    // Nút Arm (Enter) / Disarm (Esc hoặc Backspace)
+    if (keys.contains(LogicalKeyboardKey.enter)) isArmBtn = true;
+    if (keys.contains(LogicalKeyboardKey.escape) || keys.contains(LogicalKeyboardKey.backspace)) isDisarmBtn = true;
+
+    // --- 3. XỬ LÝ PITCH & ROLL VỚI SLEW RATE LIMITER ---
     double targetRoll = stickLeftX * 50.0;
     double targetPitch = stickLeftY * -50.0; 
 
-    // Giới hạn tốc độ gạt: Tối đa thay đổi 5 đơn vị mỗi 50ms.
-    const double maxStep = 5.0;
+    const double maxStep = 5.0; // Tốc độ đáp ứng (độ trễ gạt cần)
 
-    // Áp dụng giới hạn cho Roll
     if (targetRoll > _lastRoll + maxStep) {
       roll = _lastRoll + maxStep;
     } else if (targetRoll < _lastRoll - maxStep) {
       roll = _lastRoll - maxStep;
     } else {
-      roll = targetRoll; // Nếu thay đổi nhỏ hơn maxStep, cập nhật bình thường
+      roll = targetRoll;
     }
 
-    // Áp dụng giới hạn cho Pitch
     if (targetPitch > _lastPitch + maxStep) {
       pitch = _lastPitch + maxStep;
     } else if (targetPitch < _lastPitch - maxStep) {
@@ -87,19 +116,14 @@ class GamepadService {
       pitch = targetPitch;
     }
 
-    // --- 3. XỬ LÝ YAW (HƯỚNG ĐẦU DRONE - CỘNG DỒN) ---
-   if (stickRightX != 0) {
+    // --- 4. XỬ LÝ YAW (Hướng đầu drone - CỘNG DỒN) ---
+    if (stickRightX != 0) {
       yaw += stickRightX * 3.0; 
-      
-      // Sửa lỗi: Quấn vòng giá trị để có thể quay 360 độ liên tục
-      if (yaw > 180.0) {
-        yaw -= 360.0;
-      } else if (yaw <= -180.0) {
-        yaw += 360.0;
-      }
+      if (yaw > 180.0) yaw -= 360.0;
+      else if (yaw <= -180.0) yaw += 360.0;
     }
 
-    // --- 4. XỬ LÝ MỨC GA (THROTTLE - CỘNG DỒN) ---
+    // --- 5. XỬ LÝ MỨC GA (THROTTLE - CỘNG DỒN) ---
     if (rtValue > 0.1 && throttle < 100.0) {
       throttle += 1.5; 
       if (throttle > 100.0) throttle = 100.0;
@@ -109,51 +133,34 @@ class GamepadService {
       if (throttle < 0.0) throttle = 0.0;
     }
 
-    // --- 5. LỆNH GỬI LIÊN TỤC (TRÁNH FAILSAFE) ---
+    // --- 6. GỬI LỆNH ĐIỀU KHIỂN XUỐNG BỘ LỌC ĐỂ BẮN UDP ---
     if (onControlUpdated != null) {
       onControlUpdated!(roll, pitch, yaw, throttle);
     }
     
-    // --- LƯU LẠI GIÁ TRỊ VÀO BIẾN CHƯA DÙNG ĐỂ CHUẨN BỊ CHO VÒNG LẶP SAU ---
-  
     _lastRoll = roll;
     _lastPitch = pitch;
 
-    // --- 6. XỬ LÝ NÚT BẤM (ARM / DISARM) ---
-    bool isArmPressed = state.buttonA; 
-    bool isDisarmPressed = state.buttonB; 
-
-    if (isArmPressed && !_wasArmPressed) {
+    // --- 7. XỬ LÝ NÚT BẤM (ARM / DISARM) ---
+    if (isArmBtn && !_wasArmPressed) {
       if (onArmPressed != null) onArmPressed!();
     }
-    if (isDisarmPressed && !_wasDisarmPressed) {
+    if (isDisarmBtn && !_wasDisarmPressed) {
       if (onDisarmPressed != null) onDisarmPressed!();
     }
 
-    _wasArmPressed = isArmPressed;
-    _wasDisarmPressed = isDisarmPressed;
+    _wasArmPressed = isArmBtn;
+    _wasDisarmPressed = isDisarmBtn;
 
-    // --- 7. CẬP NHẬT TRẠNG THÁI HIỂN THỊ ---
+    // --- 8. CẬP NHẬT GIAO DIỆN HÌNH TAY CẦM TRÊN MÀN HÌNH ---
     keyStates["a_0"] = stickLeftX;
     keyStates["a_1"] = stickLeftY * -1;
     keyStates["a_2"] = stickRightX;
     keyStates["a_3"] = stickRightY * -1;
     keyStates["a_4"] = ltValue;
     keyStates["a_5"] = rtValue;
-
-    keyStates["b_0"] = state.buttonA ? 1.0 : 0.0; 
-    keyStates["b_1"] = state.buttonB ? 1.0 : 0.0; 
-    keyStates["b_2"] = state.buttonX ? 1.0 : 0.0; 
-    keyStates["b_3"] = state.buttonY ? 1.0 : 0.0; 
-    keyStates["b_4"] = state.leftShoulder ? 1.0 : 0.0; 
-    keyStates["b_5"] = state.rightShoulder ? 1.0 : 0.0; 
-    keyStates["b_8"] = state.buttonBack ? 1.0 : 0.0; 
-    keyStates["b_9"] = state.buttonStart ? 1.0 : 0.0; 
-    
-    keyStates["b_12"] = state.dpadUp ? 1.0 : 0.0;
-    keyStates["b_13"] = state.dpadDown ? 1.0 : 0.0;
-    keyStates["b_14"] = state.dpadLeft ? 1.0 : 0.0;
-    keyStates["b_15"] = state.dpadRight ? 1.0 : 0.0;
+    keyStates["b_0"] = isArmBtn ? 1.0 : 0.0; 
+    keyStates["b_1"] = isDisarmBtn ? 1.0 : 0.0; 
 
     if (onKeyStatesChanged != null) {
       onKeyStatesChanged!(keyStates);
@@ -162,6 +169,6 @@ class GamepadService {
 
   void dispose() {
     _pollingTimer?.cancel();
-    debugPrint("🛑 Đã ngắt kết nối Gamepad Service.");
+    debugPrint("🛑 Đã ngắt kết nối Input Service.");
   }
 }
