@@ -98,7 +98,6 @@ void calibrateCompass() {
         Wire.setClock(100000);
     }
     
-    // Tăng từ 20ms lên 50ms (20Hz) để cảm biến kịp trả lời, chống treo
     delay(50); 
   }
 
@@ -119,17 +118,11 @@ void calibrateCompass() {
 }
 
 void readCompass() {
-  static uint32_t lastCompassRead = 0;
-  uint32_t now = millis();
-
-  // Khi bay thực tế, nếu bị nghẽn cũng giãn ra 50ms thay vì 20ms
-  if (now - lastCompassRead >= 50) { 
-    lastCompassRead = now; 
 
     Wire.beginTransmission(QMC5883P_ADDR);
     Wire.write(QMC5883P_REG_DATA); 
     if (Wire.endTransmission() != 0) {
-        Wire.begin(); // Reset I2C chống rơi drone
+        Wire.begin(); // Reset I2C chống kẹt
         return; 
     }
 
@@ -154,14 +147,11 @@ void readCompass() {
 
       float heading = atan2(-y_horizontal, x_horizontal) * 180.0f / PI; 
       
-    
       float offset_lap_dat = -90.0f; 
       heading += offset_lap_dat;
-      
-    
       heading += goc_tu_thien;
 
-      // 3. CHUẨN HÓA LẠI GÓC VỀ 0-360
+      // Chuẩn hóa lại góc về 0-360
       while (heading < 0.0f) heading += 360.0f;
       while (heading >= 360.0f) heading -= 360.0f;
 
@@ -169,25 +159,26 @@ void readCompass() {
       static bool heading_initialized = false;
       
       if (!heading_initialized) {
-        heading_filtered = heading; heading_initialized = true;
+        heading_filtered = heading; 
+        heading_initialized = true;
       } else {
         float diff = heading - heading_filtered;
         if (diff > 180.0f) diff -= 360.0f;
         else if (diff < -180.0f) diff += 360.0f;
         
+        // Lọc nhiễu la bàn
         heading_filtered += diff * 0.3f; 
         if (heading_filtered >= 360.0f) heading_filtered -= 360.0f;
         if (heading_filtered < 0.0f) heading_filtered += 360.0f;
       }
+      
       goc_la_ban = heading_filtered;
     }
-  }
 }
 
 void calibrateAndSave() {
     buzzer_bat_dau_calib();
 
-    // 1. Quét I2C trong 30 giây (đã fix tốc độ và chống treo)
     calibrateCompass();  
     
     // 2. Còi kết thúc
@@ -198,6 +189,5 @@ void calibrateAndSave() {
     
     delay(500); 
     
-    // 3. Ghi an toàn vào bộ nhớ
     saveCalibrationToEEPROM(); 
 }

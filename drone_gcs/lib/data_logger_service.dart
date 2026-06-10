@@ -8,7 +8,6 @@ class DataLoggerService {
   IOSink? _sink;
   String? currentFilePath;
   
-  // MỚI: Biến đếm số thứ tự mẫu (thay cho mốc thời gian ms)
   int _sampleCount = 0;
 
   Future<bool> startLogging() async {

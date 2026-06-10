@@ -7,7 +7,7 @@
 
 WiFiUDP udp;
 
-// Biến toàn cục lấy từ config.h
+
 extern Lenh_Dieu_Khien Lenh_gui_di;
 extern GPS_Data GPS_data; 
 extern Goi_du_lieu Du_lieu_gui_toi_ESP;
@@ -16,7 +16,7 @@ extern Preferences memory_management;
 // ĐỊA CHỈ MÁY TÍNH 
 const char* targetIP = "192.168.137.79"; 
 const int targetPort = 34542;
-const int localPort = 34542;   //cổng để ESP32 lắng nghe lệnh từ App
+const int localPort = 34542;   
 
 // BIẾN CHO FAILSAFE
 unsigned long thoi_gian_nhan_lenh_cuoi = 0; 
@@ -29,7 +29,6 @@ void setupUDP() {
 void receiveCommandsUDP() {
   int packetSize = udp.parsePacket(); 
   if (packetSize) {
-    // Sửa lỗi: Tăng kích thước mảng lên 256 để chứa ký tự '\0' một cách an toàn
     char packetBuffer[256];
     int len = udp.read(packetBuffer, 255);
     if (len > 0) packetBuffer[len] = '\0'; // Kết thúc chuỗi chuẩn C
@@ -54,28 +53,28 @@ void receiveCommandsUDP() {
 
     // LỆNH 2: CẬP NHẬT PID
     else if (incomingData.startsWith("@") && incomingData.endsWith("*")) {
-      float r_p, r_i, r_d, p_p, p_i, p_d, y_p, y_i, y_d;
-      int parsed = sscanf(incomingData.c_str(), "@%f,%f,%f,%f,%f,%f,%f,%f,%f*", 
-                          &r_p, &r_i, &r_d, &p_p, &p_i, &p_d, &y_p, &y_i, &y_d);
+      float r_p, r_d, p_p, p_d, y_p, y_i, dummy;
+      // Yêu cầu quét chính xác 7 thông số (khớp với app Flutter)
+      int parsed = sscanf(incomingData.c_str(), "@%f,%f,%f,%f,%f,%f,%f*", 
+                          &r_p, &r_d, &p_p, &p_d, &y_p, &y_i, &dummy);
       
-      if (parsed == 9) {
+      if (parsed == 7) {
+        
+        
         Lenh_gui_di.Kp_roll_moi = r_p;
-       // Lenh_gui_di.Ki_roll_moi = r_i;
         Lenh_gui_di.Kd_roll_moi = r_d;
         Lenh_gui_di.Kp_pitch_moi = p_p;
-        //Lenh_gui_di.Ki_pitch_moi = p_i;
         Lenh_gui_di.Kd_pitch_moi = p_d;
         Lenh_gui_di.Kp_yaw_moi = y_p;
         Lenh_gui_di.Ki_yaw_moi = y_i;
         
         memory_management.putFloat("Kp_roll", r_p);
-        //memory_management.putFloat("Ki_roll", r_i);
         memory_management.putFloat("Kd_roll", r_d);
         memory_management.putFloat("Kp_pitch", p_p);
-       // memory_management.putFloat("Ki_pitch", p_i);
         memory_management.putFloat("Kd_pitch", p_d);
         memory_management.putFloat("Kp_yaw", y_p);
         memory_management.putFloat("Ki_yaw", y_i);
+      
       }
     }
   }
@@ -103,7 +102,7 @@ void checkFailsafe() {
         thoi_gian_giam_ga = hien_tai;
       }
 
-      // 3. Nếu ga đã xuống rất thấp, tự động DISARM sau một khoảng thời gian (ví dụ 10 giây)
+      // 3. Nếu ga đã xuống rất thấp, tự động DISARM sau một khoảng thời gian 
       if (hien_tai - thoi_gian_nhan_lenh_cuoi > 10000) {
         Lenh_gui_di.Trang_thai_Arm = 0;
         Lenh_gui_di.Muc_Ga = 1000;
@@ -118,45 +117,24 @@ void sendTelemetryUDP() {
     lastSendTime = millis();
 
     if (WiFi.status() == WL_CONNECTED) {
-      String telemetryData = "";
-      telemetryData.reserve(400); 
-
-      telemetryData += "$";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Roll) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Pitch) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Yaw) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Dien_ap) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Dong_dien) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Do_cao, 1) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Ap_xuat) + ",";
-      telemetryData += String(Du_lieu_gui_toi_ESP.Nhiet_do) + ",";
+      char telemetryBuffer[400]; 
       
-      telemetryData += String(GPS_data.gps_lat, 6) + ",";
-      telemetryData += String(GPS_data.gps_lng, 6) + ",";
-      telemetryData += String(GPS_data.gps_sat) + ",";
-      telemetryData += String(GPS_data.gps_hdop, 1) + ",";
-      telemetryData += String(GPS_data.gps_speed, 1) + ",";
-      telemetryData += String(GPS_data.gps_alt, 1) + ",";
-      telemetryData += String(GPS_data.gps_course, 1) + ",";
-      
-      telemetryData += String(Lenh_gui_di.Muc_Ga) + ","; 
-      telemetryData += String(Lenh_gui_di.Diem_dat_Roll) + ",";
-      telemetryData += String(Lenh_gui_di.Diem_dat_Pitch) + ",";
-      telemetryData += String(Lenh_gui_di.Diem_dat_Yaw) + ",";
-      telemetryData += String(Lenh_gui_di.Kp_roll_moi) + ",";
 
-      //telemetryData += String(Lenh_gui_di.Ki_roll_moi) + ",";
-      telemetryData += String(Lenh_gui_di.Kd_roll_moi) + ",";
-      telemetryData += String(Lenh_gui_di.Kp_pitch_moi) + ",";
-     //telemetryData += String(Lenh_gui_di.Ki_pitch_moi) + ",";
-      telemetryData += String(Lenh_gui_di.Kd_pitch_moi) + ",";
-      telemetryData += String(Lenh_gui_di.Kp_yaw_moi) + ",";
-      telemetryData += String(Lenh_gui_di.Ki_yaw_moi) + ",";
-      telemetryData += String(Lenh_gui_di.Trang_thai_Arm); 
-      telemetryData += "*";
+      snprintf(telemetryBuffer, sizeof(telemetryBuffer), 
+        "$%.2f,%.2f,%.2f,%.2f,%.2f,%.1f,%.2f,%.2f,%.6f,%.6f,%d,%.1f,%.1f,%.1f,%.1f,%.0f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d*",
+        Du_lieu_gui_toi_ESP.Roll, Du_lieu_gui_toi_ESP.Pitch, Du_lieu_gui_toi_ESP.Yaw,
+        Du_lieu_gui_toi_ESP.Dien_ap, Du_lieu_gui_toi_ESP.Dong_dien, Du_lieu_gui_toi_ESP.Do_cao,
+        Du_lieu_gui_toi_ESP.Ap_xuat, Du_lieu_gui_toi_ESP.Nhiet_do,
+        GPS_data.gps_lat, GPS_data.gps_lng, GPS_data.gps_sat, GPS_data.gps_hdop,
+        GPS_data.gps_speed, GPS_data.gps_alt, GPS_data.gps_course,
+        Lenh_gui_di.Muc_Ga, Lenh_gui_di.Diem_dat_Roll, Lenh_gui_di.Diem_dat_Pitch, Lenh_gui_di.Diem_dat_Yaw,
+        Lenh_gui_di.Kp_roll_moi, Lenh_gui_di.Kd_roll_moi,
+        Lenh_gui_di.Kp_pitch_moi, Lenh_gui_di.Kd_pitch_moi,
+        Lenh_gui_di.Kp_yaw_moi, Lenh_gui_di.Ki_yaw_moi,
+        Lenh_gui_di.Trang_thai_Arm);
 
       udp.beginPacket(targetIP, targetPort);
-      udp.print(telemetryData);  
+      udp.print(telemetryBuffer);  
       udp.endPacket();
     }
   }

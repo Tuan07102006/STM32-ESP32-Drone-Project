@@ -26,7 +26,8 @@ Widget buildCompactCard(String title, String value, String unit, Color accentCol
       padding: const EdgeInsets.all(6.0), 
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        // SỬA Ở ĐÂY: Đổi từ .start sang .center để kéo mọi thứ vào giữa thẻ
+        crossAxisAlignment: CrossAxisAlignment.center, 
         children: [
           FittedBox(
             fit: BoxFit.scaleDown, 
@@ -36,7 +37,10 @@ Widget buildCompactCard(String title, String value, String unit, Color accentCol
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center, 
+              crossAxisAlignment: CrossAxisAlignment.center,
+             
+              textBaseline: TextBaseline.alphabetic, 
               children: [
                 Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)), 
                 const SizedBox(width: 3),

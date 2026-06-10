@@ -5,12 +5,12 @@
 
 #define QMC5883P_ADDR 0x2C
 
-// --- ĐỊNH NGHĨA THANH GHI I2C ---
+// ĐỊNH NGHĨA THANH GHI I2C
 #define QMC5883P_REG_DATA       0x01
 #define QMC5883P_REG_CTRL1      0x0A
 #define QMC5883P_REG_CTRL2      0x0B
 
-// --- ĐỊNH NGHĨA GIÁ TRỊ CẤU HÌNH ---
+// ĐỊNH NGHĨA GIÁ TRỊ CẤU HÌNH 
 #define QMC5883P_VAL_CTRL1      0x1D
 #define QMC5883P_VAL_CTRL2      0x01
 

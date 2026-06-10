@@ -7,7 +7,7 @@
 			"path": "Phan_mem_STM32"
 		},
 		{
-			"path": "Phan_mem_EST32"
+			"path": "Phan_mem_ESP32"
 		}
 	],
 	"settings": {}

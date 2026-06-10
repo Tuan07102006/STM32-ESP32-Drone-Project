@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'shared_components.dart';
 import 'gamepad_visualizer.dart';
+import 'gamepad_service.dart';
 
 class ControlPanel extends StatelessWidget {
   final ValueNotifier<Map<String, double>> gamepadStateNotifier;
@@ -185,6 +186,21 @@ class ControlPanel extends StatelessWidget {
   }
 
   void _showPidTuningDialog(BuildContext context) {
+    int isArmed = telemetryData["Trang_thai_Arm"] ?? 0;
+    if (isArmed == 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("⚠️ AN TOÀN: Vui lòng DISARM (Khóa) drone trước khi cài đặt PID!"),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    // KHÓA BÀN PHÍM / GAMEPAD KHI BẮT ĐẦU MỞ BẢNG PID
+    GamepadService().ignoreInput = true;
+
     final TextEditingController kpRollController = TextEditingController(text: telemetryData["Kp_roll_moi"]?.toString() ?? "0.0");
     final TextEditingController kdRollController = TextEditingController(text: telemetryData["Kd_roll_moi"]?.toString() ?? "0.0");
     final TextEditingController kpPitchController = TextEditingController(text: telemetryData["Kp_pitch_moi"]?.toString() ?? "0.0");
@@ -194,6 +210,7 @@ class ControlPanel extends StatelessWidget {
 
     showDialog(
       context: context,
+      barrierDismissible: false, // Bắt buộc người dùng phải bấm nút để đóng, tránh thoát vô tình
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Cài đặt PID"),
@@ -213,19 +230,50 @@ class ControlPanel extends StatelessWidget {
             ),
           ),
           actions: [
-            TextButton(child: const Text("Hủy"), onPressed: () => Navigator.of(context).pop()),
+            TextButton(
+              child: const Text("Hủy"), 
+              onPressed: () {
+                GamepadService().ignoreInput = false; // MỞ LẠI BÀN PHÍM
+                Navigator.of(context).pop();
+              }
+            ),
             ElevatedButton(
               child: const Text("Lưu"),
               onPressed: () {
+                GamepadService().ignoreInput = false; // MỞ LẠI BÀN PHÍM
+
+                int currentArmedState = telemetryData["Trang_thai_Arm"] ?? 0;
+                if (currentArmedState == 1) {
+                  Navigator.of(context).pop(); 
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("⚠️ ĐÃ HỦY LƯU: Drone vừa bị Arm, không thể đổi PID!"),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                  return;
+                }
+
                 String command = "@${kpRollController.text},${kdRollController.text},${kpPitchController.text},${kdPitchController.text},${kpYawController.text},${kiYawController.text},0.0*"; 
-                onSendPidCommand(command); // Kích hoạt callback thay vì gọi trực tiếp
+                onSendPidCommand(command); 
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("✅ Đã gửi lệnh lưu PID!"),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
                 Navigator.of(context).pop();
               },
             ),
           ],
         );
       },
-    );
+    ).then((_) {
+      // Đề phòng trường hợp lỗi HĐH hoặc user bấm Esc tắt ngang dialog
+      GamepadService().ignoreInput = false; 
+    });
   }
 
   Widget _buildPidInputField(String label, TextEditingController controller) {

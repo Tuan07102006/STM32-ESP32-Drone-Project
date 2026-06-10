@@ -156,8 +156,6 @@ bool readGPSRaw() {
     }
   }
 
-  // Khuyến nghị: Việc in log nên đưa ra ngoài main loop (hoặc dùng timer)
-  // Chỉ in khi vừa parse thành công 1 câu dữ liệu mới hoàn chỉnh để tránh spam Serial
   if (newDataParsed) {
     /* 
     Serial.print(GPS_data.gps_lat, 6); Serial.print(", ");

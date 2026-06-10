@@ -13,7 +13,7 @@
 float beta = 0.1f; // Hệ số lọc (có thể chỉnh từ 0.05 đến 0.2)
 float q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f; // Quaternion
 
-// 1. ĐƯA HÀM NÀY LÊN TRÊN ĐỂ FIX LỖI "NOT DECLARED IN THIS SCOPE"
+
 // Hàm căn bậc hai nghịch đảo cực nhanh (Fast Inverse Square Root)
 float invSqrt(float x) {
     float halfx = 0.5f * x;
@@ -98,6 +98,7 @@ void initIMU() {
   SPI.setMOSI(SDA_MOSI);
   SPI.begin();
   writeReg(0x6B, 0x00); 
+  writeReg(0x1A, 0x03);
 }
 
 void updateIMUCalculations(float dt) {
@@ -122,11 +123,10 @@ void updateIMUCalculations(float dt) {
   float gY_raw = -(gz / 131.0f);
 
   static float gR = 0.0f, gP = 0.0f, gY = 0.0f;
-  gR = 0.7f * gR + 0.3f * gR_raw;
-  gP = 0.7f * gP + 0.3f * gP_raw;
-  gY = 0.7f * gY + 0.3f * gY_raw;
-
-  // CHÚ Ý QUAN TRỌNG: Madgwick yêu cầu Gyro tính bằng Radians/giây (rad/s)
+  gR = gR_raw;
+  gP = gP_raw;
+  gY = gY_raw;
+  //Madgwick yêu cầu Gyro tính bằng Radians/giây (rad/s)
   float gyro_rad_x = gR * PI / 180.0f;
   float gyro_rad_y = gP * PI / 180.0f;
   float gyro_rad_z = gY * PI / 180.0f;

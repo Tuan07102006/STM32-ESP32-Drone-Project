@@ -101,8 +101,8 @@ void processFlightControl(float dt) {
 
   // 3. TÍNH TOÁN BỘ QUAN SÁT VÀ LUẬT ĐIỀU KHIỂN (ADRC)
   if (!is_leso_init) {
-      init_attitude_estimation(&leso_roll, 20.0f, 40.0f);
-      init_attitude_estimation(&leso_pitch, 20.0f, 40.0f);
+      init_attitude_estimation(&leso_roll, 10.0f, 40.0f);
+      init_attitude_estimation(&leso_pitch, 10.0f, 40.0f);
       is_leso_init = true;
   }
 
@@ -125,8 +125,8 @@ void processFlightControl(float dt) {
   float y_out = Tinh_PID_Yaw(&PID_yaw, Lenh_tu_ESP.Diem_dat_Yaw, goc_yaw_thuc_te, dt); 
 
   // Giới hạn an toàn và lưu lại cho chu kỳ LESO sau
-  r_out = constrain(r_out, -300.0f, 300.0f);
-  p_out = constrain(p_out, -300.0f, 300.0f);
+  r_out = constrain(r_out, -500.0f, 500.0f);
+  p_out = constrain(p_out, -500.0f, 500.0f);
   y_out = constrain(y_out, -150.0f, 150.0f);
 
   last_r_out = r_out;
@@ -171,12 +171,48 @@ void processFlightControl(float dt) {
           Set_Motor_Speed(1050, 1050, 1050, 1050); 
           break;
 
-      case STATE_FLYING:
-          // Trộn tín hiệu ra 4 động cơ (X Copter Form)
-          Set_Motor_Speed(thr + r_out - p_out - y_out,  
-                          thr + r_out + p_out + y_out,  
-                          thr - r_out + p_out - y_out,  
-                          thr - r_out - p_out + y_out); 
-          break;
+      case STATE_FLYING: {
+    const float MIN_THROTTLE = 1050.0f; // Mức quay chờ an toàn
+    const float MAX_THROTTLE = 2000.0f; // Mức tối đa
+
+    // 1. Tính toán thô
+    float m1 = thr + r_out - p_out - y_out;
+    float m2 = thr + r_out + p_out + y_out;
+    float m3 = thr - r_out + p_out - y_out;
+    float m4 = thr - r_out - p_out + y_out;
+
+    // 2. Tìm động cơ có giá trị thấp nhất và cao nhất
+    float min_motor = min(min(m1, m2), min(m3, m4));
+    float max_motor = max(max(m1, m2), max(m3, m4));
+
+    // 3. BÙ TRỪ KHI BỊ BÃO HÒA DƯỚI (Ngăn motor tắt)
+    if (min_motor < MIN_THROTTLE) {
+        float shift_up = MIN_THROTTLE - min_motor; // Tính lượng thiếu hụt
+        m1 += shift_up;
+        m2 += shift_up;
+        m3 += shift_up;
+        m4 += shift_up;
+    }
+
+    // 4. BÙ TRỪ KHI BỊ BÃO HÒA TRÊN (Ngăn motor kịch trần)
+    // Sau khi shift_up, có thể max_motor bị đẩy vượt 2000, ta phải kiểm tra lại
+    max_motor = max(max(m1, m2), max(m3, m4));
+    if (max_motor > MAX_THROTTLE) {
+        float shift_down = max_motor - MAX_THROTTLE;
+        m1 -= shift_down;
+        m2 -= shift_down;
+        m3 -= shift_down;
+        m4 -= shift_down;
+    }
+
+    // 5. Constrain lần cuối cùng cho an toàn tuyệt đối và xuất ra
+    m1 = constrain(m1, MIN_THROTTLE, MAX_THROTTLE);
+    m2 = constrain(m2, MIN_THROTTLE, MAX_THROTTLE);
+    m3 = constrain(m3, MIN_THROTTLE, MAX_THROTTLE);
+    m4 = constrain(m4, MIN_THROTTLE, MAX_THROTTLE);
+
+    Set_Motor_Speed(m1, m2, m3, m4);
+    break;
+}
   }
 }

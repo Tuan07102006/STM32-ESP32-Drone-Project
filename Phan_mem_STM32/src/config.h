@@ -19,8 +19,8 @@
 
 #define Gioi_han_toc_do(val, min, max) constrain(val, min, max)
 
-// --- STRUCTS ---
-// Thùng hàng xuất khẩu: STM32 -> ESP32
+//  STRUCTS 
+// STM32 -> ESP32
 struct __attribute__((packed)) Goi_du_lieu {
   float Roll, Pitch, Yaw;
   float Gia_toc_x, Gia_toc_y, Gia_toc_z;
@@ -28,7 +28,7 @@ struct __attribute__((packed)) Goi_du_lieu {
   float Do_cao, Ap_xuat, Nhiet_do;
 };
 
-// Thùng hàng nhập khẩu: ESP32 -> STM32
+// ESP32 -> STM32
 struct __attribute__((packed)) Lenh_Dieu_Khien {
   float Muc_Ga;
   float Diem_dat_Roll;

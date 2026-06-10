@@ -4,9 +4,9 @@ import 'package:drone_gcs/gamepad_service.dart';
 import 'package:drone_gcs/data_logger_service.dart'; 
 
 // Import các panels đã chia
-import 'widgets/charts_panel.dart';
-import 'widgets/telemetry_panel.dart';
-import 'widgets/control_panel.dart';
+import 'charts_panel.dart';
+import 'telemetry_panel.dart';
+import 'control_panel.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});

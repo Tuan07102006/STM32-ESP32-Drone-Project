@@ -10,7 +10,7 @@
 #include "calibrateESC.h"
 #include "Buzzer_manager.h"
 
-// --- KHỞI TẠO BIẾN TOÀN CỤC ---
+// KHỞI TẠO BIẾN TOÀN CỤC 
 Goi_du_lieu Du_lieu_gui_toi_ESP;
 
 // 1000(Ga), 0,0,0(Góc), 1.5,0.05,1.2(Roll), 1.5,0.05,1.2(Pitch), 2.0,0.1(Yaw), 0(Arm)
@@ -29,15 +29,15 @@ unsigned long time_prev = 0;
 void setup() {
   khoi_tao_buzzer();
   
-  // Thiết lập I2C cho các chân được remap trên STM32
+  // Thiết lập I2C cho các chân trên STM32
   Wire.setSCL(I2C_SCL); 
   Wire.setSDA(I2C_SDA); 
   Wire.begin();
   
   initMotors();
   initCompass();
-  // calibrateESC();       // Bỏ comment khi cần Calib ESC
-  //calibrateAndSave();   // Bỏ comment khi cần Calib La bàn
+  // calibrateESC();       
+  //calibrateAndSave();  
   initIMU();
   initSensors();
   initUART();
@@ -46,29 +46,37 @@ void setup() {
 }
 
 void loop() {
-  unsigned long now = micros();
-  
-  // Khóa cứng chu kỳ vòng lặp ở mức 4000us (250Hz)
-  if (now - time_prev < 4000) return; 
-  
-  // Tính toán thời gian delta (dt) ra đơn vị giây
-  float dt = (now - time_prev) / 1000000.0f; 
-  
-  if (dt <= 0.0f || dt > 0.02f) {
-    dt = 0.004f; 
-  }
-  time_prev = now;
+    uint32_t now_micros = micros();
+    uint32_t now_millis = millis();
 
-  // --- VÒNG LẶP ĐIỀU KHIỂN CHÍNH (250Hz) ---
-  readCompass(); 
-  handleCommunication();   
-  updateIMUCalculations(dt); 
-  processFlightControl(dt);  
+    static uint32_t last_loop_400Hz = 0;
+    static uint32_t last_loop_50Hz = 0;
+    static uint32_t last_loop_10Hz = 0;
 
-  // --- VÒNG LẶP ĐỌC CẢM BIẾN CHẬM (2Hz) ---
-  static uint32_t slowTask = 0;
-  if (millis() - slowTask > 500) {
-    readSlowSensors(); 
-    slowTask = millis();
-  }
+    
+    if (now_micros - last_loop_400Hz >= 2500) {
+        
+        float dt = (now_micros - last_loop_400Hz) / 1000000.0f;
+        last_loop_400Hz = now_micros;
+
+        updateIMUCalculations(dt); // Lấy dữ liệu Gyro/Accel (SPI) và tính Madgwick
+        processFlightControl(dt);  // Tính toán LESO, PID và xuất lệnh ra Động cơ
+    }
+
+    
+    if (now_millis - last_loop_50Hz >= 20) {
+        last_loop_50Hz = now_millis;
+
+        handleCommunication();     // Giao tiếp UART qua lại với ESP32
+        readCompass();             // Đọc la bàn GY-271 (I2C)
+
+    }
+
+    
+    if (now_millis - last_loop_10Hz >= 100) {
+        last_loop_10Hz = now_millis;
+
+        readSlowSensors();         // Đọc Baro BMP280 và INA219 (Dòng/Áp)
+           
+    }
 }

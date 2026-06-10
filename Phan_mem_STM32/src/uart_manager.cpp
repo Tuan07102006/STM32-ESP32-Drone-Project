@@ -11,7 +11,7 @@ void initUART() {
 
 void handleCommunication() {
     static uint32_t lastRecvTime = 0;
-    static uint32_t lastByteTime = 0; // Thêm biến đếm thời gian timeout byte
+    static uint32_t lastByteTime = 0; 
     static uint8_t buffer[sizeof(Lenh_Dieu_Khien)];
     static uint8_t bufIndex = 0;
     static enum { WAIT_AA, WAIT_BB, RECEIVING } state = WAIT_AA;

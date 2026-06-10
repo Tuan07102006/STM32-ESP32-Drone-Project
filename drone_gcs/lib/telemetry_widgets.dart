@@ -3,9 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'dart:math' as math;
 import 'dart:async'; 
 
-// ==========================================
 // 1. WIDGET LA BÀN CHO GÓC YAW (GY-271)
-// ==========================================
 class CompassWidget extends StatelessWidget {
   final double yaw;
   final double targetYaw;
@@ -66,9 +64,7 @@ class CompassWidget extends StatelessWidget {
   }
 }
 
-// ==========================================
 // 2. WIDGET BIỂU ĐỒ SO SÁNH (ROLL / PITCH)
-// ==========================================
 class RealtimeLineChart extends StatefulWidget {
   final String title;
   final double actualValue;
@@ -82,7 +78,7 @@ class RealtimeLineChart extends StatefulWidget {
     required this.actualValue,
     required this.targetValue,
     this.actualColor = Colors.greenAccent,
-    this.targetColor = Colors.white, // ĐÃ ĐỔI: Màu mặc định thành trắng tinh
+    this.targetColor = Colors.white, 
   });
 
   @override

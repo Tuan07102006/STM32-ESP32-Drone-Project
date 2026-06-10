@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-// --- CẤU HÌNH CHÂN ---
+// CẤU HÌNH CHÂN
 #define CHAN_NOI_LED 48  
 #define SO_BONG_LED 1
 #define STM32_RX 18  
@@ -12,8 +12,8 @@
 #define CHAN_NOI_GPS_TX 15
 #define GPS_BAUD 9600
 
-// --- CẤU TRÚC DỮ LIỆU ---
-// Thùng hàng xuất khẩu: STM32 -> ESP32
+//  CẤU TRÚC DỮ LIỆU 
+// STM32 -> ESP32
 struct __attribute__((packed)) Goi_du_lieu {
   float Roll, Pitch, Yaw;
   float Gia_toc_x, Gia_toc_y, Gia_toc_z;
@@ -21,7 +21,7 @@ struct __attribute__((packed)) Goi_du_lieu {
   float Do_cao, Ap_xuat, Nhiet_do;
 };
 
-// Thùng hàng nhập khẩu: ESP32 -> STM32
+// ESP32 -> STM32
 struct __attribute__((packed)) Lenh_Dieu_Khien {
   float Muc_Ga;
   float Diem_dat_Roll;
@@ -45,11 +45,11 @@ struct __attribute__((packed)) GPS_Data {
   float gps_speed;  // Vận tốc (4 bytes)
   float gps_course; // Hướng di chuyển (4 bytes)
   float gps_hdop;   // Độ chính xác (4 bytes)
-  uint8_t gps_sat;  // Số lượng vệ tinh (1 byte) - Vì số vệ tinh max của NEO-8M chỉ quanh 24-30
+  uint8_t gps_sat;  // Số lượng vệ tinh (1 byte) 
 };
 
 
-// --- BIẾN TOÀN CỤC ---
+// BIẾN TOÀN CỤC 
 extern Goi_du_lieu Du_lieu_gui_toi_ESP;
 extern Lenh_Dieu_Khien Lenh_gui_di;
 extern GPS_Data GPS_data;

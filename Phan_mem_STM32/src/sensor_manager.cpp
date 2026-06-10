@@ -18,18 +18,17 @@ uint8_t so_mau_calib = 0;
 float tong_do_cao = 0.0f;
 
 // 1. THÊM BIẾN BÙ TRỪ NHIỆT ĐỘ (Tính bằng độ C)
-// Ví dụ: Mạch báo 17°C, phòng bạn thực tế 30°C -> Offset là +13.0f
 const float OFFSET_NHIET_DO = 10.0f; 
 
 void initSensors() {
-    // ... (Giữ nguyên toàn bộ code khởi tạo cũ) ...
+    // (Giữ nguyên toàn bộ code khởi tạo cũ) 
     pinMode(BMP_CBS, OUTPUT); 
     digitalWrite(BMP_CBS, HIGH); 
     pinMode(IMU_NCS, OUTPUT); 
     digitalWrite(IMU_NCS, HIGH); 
     
     ina219.begin(); 
-    bmp.begin(); // Đã bỏ lệnh in lỗi để code gọn hơn
+    bmp.begin();
     
     bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,
                     Adafruit_BMP280::SAMPLING_X2,  

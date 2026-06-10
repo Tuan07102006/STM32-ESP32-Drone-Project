@@ -19,18 +19,20 @@ GPS_Data GPS_data;
 
 void setup() {
   Serial.begin(115200);
+  
   setupMemory();
+  readMemory();        
+  
   setupled();             
   setupwifi();          
   setupGPS();            
   setupUART_STM32();    
   setupUDP();   
-
 }
 
 void loop() {
   updateLEDStatus(); 
-  readMemory();   
+
   handlewifi();   
   
   receiveCommandsUDP(); 
@@ -41,5 +43,4 @@ void loop() {
   
   sendTelemetryUDP();   
   sendDataToSTM32(); 
-
 }
