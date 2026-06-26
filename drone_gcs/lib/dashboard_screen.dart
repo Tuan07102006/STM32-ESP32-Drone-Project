@@ -107,7 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GCS - Trạm Giám Sát Bay', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2)),
+        title: const Text('GCS - Trạm Giám Sát', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2)),
         backgroundColor: Colors.black87,
         centerTitle: true,
       ),
